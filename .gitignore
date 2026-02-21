@@ -3,9 +3,3 @@ imgui.ini
 
 # Build directory
 build/
-
-# Temp compilation files
-*.exe
-*.obj
-*.o
-*.log
