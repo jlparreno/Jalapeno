@@ -1,0 +1,10 @@
+# ImGui config
+imgui.ini
+
+# Temp compilation files
+*.exe
+*.obj
+*.o
+*.dll
+*.pdb
+*.log
