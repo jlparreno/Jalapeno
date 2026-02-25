@@ -16,6 +16,7 @@ file(GLOB_RECURSE SRC_FILES
     "UIManager.cpp"
     "InputManager.cpp"
     "Material.cpp"
+    "PhongMaterial.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})

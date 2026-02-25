@@ -2,6 +2,7 @@
 
 #include "Renderer.h"
 #include "Scene.h"
+#include "PhongMaterial.h"
 
 int main()
 {
@@ -22,13 +23,14 @@ int main()
     Scene* scene = new Scene("main_scene");
 
     // Materials
-    Material phong_material("phong", ShaderManager::instance().get_program("lighting_phong"));
+    // TODO: Material manager to create, access and delete all available materials
+    PhongMaterial* phong_material = new PhongMaterial("phong", ShaderManager::instance().get_program("lighting_phong"));
 
     // Models
     Model* backpack = scene->add_model("backpack", static_cast<std::string>(MODELS_DIR) + "backpack/backpack.obj");
     if (backpack)
     {
-        backpack->set_material(&phong_material);
+        backpack->set_material(phong_material);
         backpack->set_position(glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         backpack->set_scale(glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
     }

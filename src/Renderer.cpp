@@ -201,9 +201,9 @@ void Renderer::render_all_models()
 			continue;
 		}
 
-		//Bind and set matrices
 		shader->bind();
 
+		// Scene data
 		shader->set_uniform("model", model->get_model_matrix());
 		shader->set_uniform("view", view_mat);
 		shader->set_uniform("projection", projection_mat);

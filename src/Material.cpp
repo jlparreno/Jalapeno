@@ -10,7 +10,7 @@ void Material::load_textures(const std::vector<TextureInfo>& textures)
 {
     for (const auto& tex_info : textures)
     {
-        // Avoid duplicates IN OUR LIST
+        // Avoid duplicates
         if (m_textures.find(tex_info.uniform_name) != m_textures.end())
             continue;
         
@@ -31,8 +31,4 @@ void Material::bind_textures() const
         m_shader->set_uniform(uniform_name, unit);
         unit++;
     }
-}
-
-void Material::apply_uniforms()
-{
 }
