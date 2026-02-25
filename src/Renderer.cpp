@@ -178,50 +178,59 @@ void Renderer::render_all_models()
 	Camera* camera = m_scene->get_active_camera();
 	float aspect = glm::clamp((float)m_width / (float)m_height, MIN_ASPECT, MAX_ASPECT);
 
-	glm::mat4 model = glm::mat4(1.0f);
-	glm::mat4 view = camera->get_view_matrix();
-	glm::mat4 projection = glm::perspective(glm::radians(camera->get_fov()), aspect, 0.1f, 100.0f);
-
-	//TODO: This is specific for backpack, put this logic in each model
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-
-	// Get shader and configure uniforms.
-	// TODO: Implement materials and associate materials to render objects. Shader will be decided there.
-	ShaderProgram* shader = ShaderManager::instance().get_program("lighting_phong");
-
-	// Check valid shader
-	if (!shader)
-	{
-		SPDLOG_ERROR("Error getting the shader program for rendering");
-		return;
-	}
-
-	shader->bind();
-
-	shader->set_uniform("model", model);
-	shader->set_uniform("view", view);
-	shader->set_uniform("projection", projection);
-	shader->set_uniform("view_pos", camera->get_position());
-
-	// Lights
-	// TODO: This loop is to add the possibility to add more lights in the future
-	// Now we only will see the last light added to the scene
-	for (const auto& light : m_scene->get_scene_lights())
-	{
-		shader->set_uniform("light.position", light->get_position());
-		shader->set_uniform("light.ambient", light->get_ambient());
-		shader->set_uniform("light.diffuse", light->get_diffuse());
-		shader->set_uniform("light.specular", light->get_specular());
-	}
+	glm::mat4 view_mat = camera->get_view_matrix();
+	glm::mat4 projection_mat = glm::perspective(glm::radians(camera->get_fov()), aspect, 0.1f, 100.0f);
 
 	// Iterate all scene objects calling each draw function
 	for (const Model* model : m_scene->get_scene_models())
 	{
-		model->draw(shader);
-	}
+		Material* material = model->get_material();
 
-	shader->unbind();
+		if (!material)
+		{
+			SPDLOG_ERROR("Error getting the material for rendering model: {}", model->get_name());
+			continue;
+		}
+			
+		// Get shader from material
+		ShaderProgram* shader = material->get_shader();
+
+		if (!shader)
+		{
+			SPDLOG_ERROR("Error getting the shader program for rendering model: {}", model->get_name());
+			continue;
+		}
+
+		//Bind and set matrices
+		shader->bind();
+
+		shader->set_uniform("model", model->get_model_matrix());
+		shader->set_uniform("view", view_mat);
+		shader->set_uniform("projection", projection_mat);
+		shader->set_uniform("view_pos", camera->get_position());
+
+		// Lights
+		// TODO: This loop is to add the possibility to add more lights in the future
+		// Now we only will see the last light added to the scene
+		for (const auto& light : m_scene->get_scene_lights())
+		{
+			shader->set_uniform("light.position", light->get_position());
+			shader->set_uniform("light.ambient", light->get_ambient());
+			shader->set_uniform("light.diffuse", light->get_diffuse());
+			shader->set_uniform("light.specular", light->get_specular());
+		}
+
+		// Bind material textures
+		material->bind_textures();
+
+		// Set specific material uniforms
+		material->apply_uniforms();
+
+		// Draw model geometry
+		model->draw();
+
+		shader->unbind();
+	}
 }
 
 void Renderer::resize(int width, int height)
@@ -241,7 +250,15 @@ void Renderer::display_frame_times()
 	{
 		m_time_counter = 0.0f;
 		m_fps = 1.0f / delta_time;
-		std::string window_title = "Jalapeno - FPS " + std::to_string(m_fps) + " / ms " + std::to_string(delta_time * 1000);
+
+		//Time in ms (*1000.0f), 2 decimals (*100.0f / 100.0f)
+		float time_ms = std::round(delta_time * 1000.0f * 100.0f) / 100.0f;
+
+		//Get string with 2 decimals
+		std::ostringstream oss;
+		oss << std::fixed << std::setprecision(2) << time_ms;
+
+		std::string window_title = "Jalapeno    |    FPS: " + std::to_string(m_fps) + "    |    Time(ms): " + oss.str();
 		glfwSetWindowTitle(m_window, window_title.c_str());
 	}
 }

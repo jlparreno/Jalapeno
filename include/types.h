@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <string>
 
 #define MAX_BONE_INFLUENCE 4
 
@@ -24,6 +25,13 @@ enum class LightType
     Directional
 };
 
+struct TextureInfo
+{
+    std::string name;
+    std::string uniform_name;
+    std::string file_path;
+    std::string type_name;
+};
 
 struct Vertex
 {

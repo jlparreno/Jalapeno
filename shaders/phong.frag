@@ -15,6 +15,7 @@ in vec2 TexCoords;
 
 uniform vec3 view_pos;
 
+// Names convention for textures
 uniform sampler2D diffuse_tex;
 uniform sampler2D normal_tex;
 uniform sampler2D specular_tex;

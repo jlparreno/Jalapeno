@@ -15,6 +15,7 @@ file(GLOB_RECURSE SRC_FILES
     "Light.cpp"
     "UIManager.cpp"
     "InputManager.cpp"
+    "Material.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})

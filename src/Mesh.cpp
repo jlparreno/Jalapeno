@@ -1,25 +1,25 @@
 #include "Mesh.h"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture*> textures) :
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<TextureInfo>& textures_info) :
     m_vertices(vertices),
     m_indices(indices),
-    m_textures(textures)
+    m_textures_info(textures_info)
 {
     // Set the vertex buffers and its attribute pointers
     setup_buffers();
 }
 
-void Mesh::draw(ShaderProgram* shader) const
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) :
+    m_vertices(vertices),
+    m_indices(indices),
+    m_textures_info({})
 {
-    //We assume at the moment only one texture per type (1 diffuse, 1 normal, 1 specular...)
-    for (int i = 0; i < m_textures.size(); i++)
-    {
-        std::string type_name = m_textures[i]->get_type();
+    // Set the vertex buffers and its attribute pointers
+    setup_buffers();
+}
 
-        m_textures[i]->bind(i);
-        shader->set_uniform((type_name + "_tex").c_str(), i);
-    }
-
+void Mesh::draw() const
+{
     // Draw mesh
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, 0);

@@ -12,6 +12,8 @@
 #include "TextureManager.h"
 #include "ShaderProgram.h"
 #include "Mesh.h"
+#include "Material.h"
+#include "types.h"
 
 #include <string>
 #include <iostream>
@@ -33,32 +35,13 @@ public:
     /**
      * @brief Constructs a new Model and loads it from a file.
      *
+     * @param name Unique name for the model
      * @param path Filepath to the 3D model
-     * @param gamma Optional gamma correction flag (default: false).
      *
      * Loads the model immediately upon construction, including meshes and
      * materials.
      */
-    Model(const std::string& name, const std::string& path, bool gamma = false);
-
-
-    /**
-     * @brief Returns the model name.
-     *
-     * @return Model name string.
-     */
-    std::string get_name() const { return m_name; };
-
-    /**
-     * @brief Draws the model using the provided shader program.
-     *
-     * @param shader Pointer to a ShaderProgram used to render all meshes.
-     *
-     * Iterates over all stored meshes and calls their draw function.
-     */
-    void draw(ShaderProgram* shader) const;
-
-private:
+    Model(const std::string& name, const std::string& path);
 
     /**
      * @brief Loads a model from a file and stores its meshes
@@ -69,6 +52,67 @@ private:
      * internal directory path are populated.
      */
     void load_model(const std::string& path);
+
+    /**
+     * @brief Draws the model using the provided shader program.
+     *
+     * Iterates over all stored meshes and calls their draw function.
+     */
+    void draw() const;
+
+    /**
+     * @brief Returns the model name.
+     *
+     * @return Model name string.
+     */
+    std::string get_name() const { return m_name; };
+
+    /**
+     * @brief Sets the material for drawing this model.
+     *
+     * @param material Pointer to the material to apply to the model.
+     * 
+     * Loads all the textures associated to the material if they haven't been loaded previously
+     */
+    void set_material(Material* material);
+    
+    /**
+     * @brief Returns the material configured in the model
+     *
+     * @return Material pointer.
+     */
+    Material* get_material() const { return m_material; }
+
+    /**
+     * @brief Sets a new position for the model.
+     *
+     * @param pos New position of the model.
+     */
+    void set_position(const glm::vec3& pos) { m_position = pos; }
+
+    /**
+     * @brief Sets new rotation values for the model.
+     *
+     * @param rot New rotation values, euler angles, for each axis.
+     */
+    void set_rotation(const glm::vec3& rot) { m_rotation = rot; }
+
+    /**
+     * @brief Sets a new scale value for the model.
+     *
+     * @param scale New scale values, per axis
+     */
+    void set_scale(const glm::vec3& scale) { m_scale = scale; }
+
+
+    /**
+     * @brief Gets the model matrix of the model using the transforms configured.
+     *
+     * @return Transform matrix for this model.
+     */
+    glm::mat4 get_model_matrix() const;
+
+private:
 
     /**
      * @brief Recursively processes an ASSIMP node and its children in the scene graph
@@ -92,17 +136,15 @@ private:
     Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
 
     /**
-     * @brief Loads all material textures of a specific type for a mesh.
+     * @brief Gets all material textures info of a specific type for a mesh.
      *
      * @param mat Pointer to the aiMaterial containing textures.
      * @param type Type of texture to load (e.g., diffuse, specular).
      * @param typeName Name identifier for the texture type.
      * 
-     * @return std::vector<Texture*> Vector of pointers to loaded textures, present in the TextureManager.
-     *
-     * Checks if textures were already loaded to avoid duplicates.
+     * @return std::vector<TextureInfo> Vector of TextureInfo containing the uniform name and the path of the texture
      */
-    std::vector<Texture*> load_material_textures(aiMaterial* mat, aiTextureType type, std::string typeName);
+    std::vector<TextureInfo> get_material_textures_info(aiMaterial* mat, aiTextureType type, std::string type_name);
 
 
     // MODEL DATA
@@ -110,13 +152,18 @@ private:
     // Model name
     std::string           m_name;
     
-    //All the meshes of the model
-    std::vector<Mesh>     m_meshes;
-
     // Directory path of the model file
     std::string           m_directory;
 
-    // Flag for gamma correction
-    bool m_gamma_correction;
+    // All the meshes of the model
+    std::vector<Mesh>     m_meshes;
+
+    // Material used to draw the model
+    Material*             m_material;
+
+    // Transforms for this model
+    glm::vec3             m_position;
+    glm::vec3             m_rotation;
+    glm::vec3             m_scale;
 };
 

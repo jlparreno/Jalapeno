@@ -1,16 +1,22 @@
 #include "Model.h"
 
-Model::Model(const std::string& name, const std::string& path, bool gamma) : m_name(name), m_gamma_correction(gamma)
+Model::Model(const std::string& name, const std::string& path) :
+    m_name(name), 
+    m_directory(""),
+    m_material(nullptr),
+    m_position(glm::vec3(0.0f,0.0f,0.0f)),
+    m_scale(glm::vec3(1.0f, 1.0f, 1.0f)),
+    m_rotation(glm::vec3(0.0f, 0.0f, 0.0f))
 {
     load_model(path);
 }
 
-void Model::draw(ShaderProgram* shader) const
+void Model::draw() const
 {
     //Call to draw all meshes that compose the model
     for (unsigned int i = 0; i < m_meshes.size(); i++)
     {
-        m_meshes[i].draw(shader);
+        m_meshes[i].draw();
     }
 }
 
@@ -54,13 +60,12 @@ void Model::process_node(aiNode* node, const aiScene* scene)
     }
 }
 
-
 Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 {
     // Data to fill
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture*>     textures;
+    std::vector<TextureInfo>  textures;
 
     // Iterate mesh vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -131,29 +136,32 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
     }
 
-    // Materials
+    // Material textures info
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
     // Diffuse Maps
-    std::vector<Texture*> diffuseMaps = load_material_textures(material, aiTextureType_DIFFUSE, "diffuse");
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    // Specular Maps
-    std::vector<Texture*> specularMaps = load_material_textures(material, aiTextureType_SPECULAR, "specular");
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    // Normal Maps
-    std::vector<Texture*> normalMaps = load_material_textures(material, aiTextureType_HEIGHT, "normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-    // Height Maps
-    std::vector<Texture*> heightMaps = load_material_textures(material, aiTextureType_AMBIENT, "height");
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+    std::vector<TextureInfo> diffuse_textures = get_material_textures_info(material, aiTextureType_DIFFUSE, "diffuse");
+    textures.insert(textures.end(), diffuse_textures.begin(), diffuse_textures.end());
 
+    // Specular Maps
+    std::vector<TextureInfo> specular_textures = get_material_textures_info(material, aiTextureType_SPECULAR, "specular");
+    textures.insert(textures.end(), specular_textures.begin(), specular_textures.end());
+
+    // Normal Maps
+    std::vector<TextureInfo> normal_textures = get_material_textures_info(material, aiTextureType_NORMALS, "normal");
+    textures.insert(textures.end(), normal_textures.begin(), normal_textures.end());
+
+    // Height Maps
+    std::vector<TextureInfo> height_textures = get_material_textures_info(material, aiTextureType_HEIGHT, "height");
+    textures.insert(textures.end(), height_textures.begin(), height_textures.end());
+    
     // Return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures);
 }
 
-std::vector<Texture*> Model::load_material_textures(aiMaterial* mat, aiTextureType type, std::string typeName)
+std::vector<TextureInfo> Model::get_material_textures_info(aiMaterial* mat, aiTextureType type, std::string type_name)
 {
-    std::vector<Texture*> textures;
+    std::vector<TextureInfo> textures;
 
     // Iterate material textures
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -166,18 +174,53 @@ std::vector<Texture*> Model::load_material_textures(aiMaterial* mat, aiTextureTy
         std::filesystem::path texture_path{ str.C_Str() };
         std::string texture_name = texture_path.stem().string();
 
-        // Try to load texture into the Manager. 
-        // If it exists, the manager will return the pointer to the existing texture previously loaded.
-        Texture* texture = TextureManager::instance().load_texture(texture_name, m_directory + str.C_Str(), true);
+        TextureInfo info;
+        info.name = m_name + "_" + texture_name;
+        info.file_path = m_directory + str.C_Str();
+        info.type_name = type_name;
 
-        if (texture)
+        switch (type)
         {
-            texture->set_type(typeName);
+        case aiTextureType_DIFFUSE:
+            //At the moment only one texture per type (last loaded)
+            //info.uniform_name = "diffuse_tex" + std::to_string(i + 1);
+            info.uniform_name = "diffuse_tex";
+            break;
+        case aiTextureType_NORMALS:
+            info.uniform_name = "normal_tex";
+            break;
+        case aiTextureType_SPECULAR:
+            info.uniform_name = "specular_tex";
+            break;
+        case aiTextureType_HEIGHT:
+            info.uniform_name = "height_tex";
+            break;
+        }    
 
-            // Add the texture to the list
-            textures.push_back(texture);
-        }
+        textures.push_back(info);
     }
 
     return textures;
+}
+
+void Model::set_material(Material* material) 
+{ 
+    m_material = material; 
+
+    // Loads all material textures
+    for (auto mesh : m_meshes)
+    {
+        material->load_textures(mesh.get_textures_info());
+    }
+}
+
+glm::mat4 Model::get_model_matrix() const
+{
+    glm::mat4 model(1.0f);
+
+    model = glm::translate(model, m_position);
+    model = glm::scale(model, m_scale);
+    //model = glm::rotate(model,);
+
+    return model;
 }
