@@ -1,12 +1,12 @@
 #include "PhongMaterial.h"
 
-PhongMaterial::PhongMaterial(const std::string& name, ShaderProgram* shader) : 
-	Material(name, shader),
+PhongMaterial::PhongMaterial(const std::string& name) : 
+	Material(name, MaterialType::Phong), 
 	m_shininess(32.0f)
 {
 }
 
-void PhongMaterial::apply_uniforms() const
+void PhongMaterial::apply_uniforms(ShaderProgram* shader) const
 {
-	m_shader->set_uniform("material.shininess", m_shininess);
+	shader->set_uniform("material.shininess", m_shininess);
 }

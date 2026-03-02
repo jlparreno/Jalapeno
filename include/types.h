@@ -2,8 +2,18 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <variant>
 
 #define MAX_BONE_INFLUENCE 4
+
+using UniformValue = std::variant<
+    float, 
+    glm::vec2, 
+    glm::vec3, 
+    glm::vec4, 
+    glm::mat4, 
+    int
+>;
 
 /**
 * @enum ShaderType
@@ -25,12 +35,16 @@ enum class LightType
     Directional
 };
 
-struct TextureInfo
+enum class MaterialType
+{
+    Phong,
+    PBR
+};
+
+struct MaterialUniform 
 {
     std::string name;
-    std::string uniform_name;
-    std::string file_path;
-    std::string type_name;
+    UniformValue value;
 };
 
 struct Vertex

@@ -18,9 +18,8 @@ public:
 	 * @brief Constructs a new Phong material.
 	 *
 	 * @param name   Identifier name of the material.
-	 * @param shader Pointer to the ShaderProgram that implements a phong shader.
 	 */
-	PhongMaterial(const std::string& name, ShaderProgram* shader);
+	PhongMaterial(const std::string& name);
 
     /**
      * @brief Sets the shininess exponent controlling specular highlight size.
@@ -41,7 +40,7 @@ protected:
      *
      * The method assumes the shader program is already bound.
      */
-    void apply_uniforms() const override;
+    void apply_uniforms(ShaderProgram* shader) const override;
 
 private:
 

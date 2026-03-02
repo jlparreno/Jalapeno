@@ -1,25 +1,29 @@
 #include "Mesh.h"
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<TextureInfo>& textures_info) :
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material) :
     m_vertices(vertices),
     m_indices(indices),
-    m_textures_info(textures_info)
+    m_material(material)
 {
     // Set the vertex buffers and its attribute pointers
     setup_buffers();
 }
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) :
-    m_vertices(vertices),
-    m_indices(indices),
-    m_textures_info({})
+void Mesh::draw(ShaderProgram* shader) const
 {
-    // Set the vertex buffers and its attribute pointers
-    setup_buffers();
-}
+    // Check if material is valid
+    if (!m_material)
+    {
+        SPDLOG_ERROR("Error getting the material for rendering mesh");
+        return;
+    }
 
-void Mesh::draw() const
-{
+    // Bind material textures
+    m_material->bind_textures(shader);
+
+    // Set specific material uniforms
+    m_material->apply_uniforms(shader);
+
     // Draw mesh
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, 0);

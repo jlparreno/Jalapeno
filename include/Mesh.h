@@ -2,9 +2,9 @@
 
 #include <glad/glad.h>
 
-#include "TextureManager.h"
 #include "ShaderProgram.h"
 #include "Texture.h"
+#include "Material.h"
 
 #include <string>
 #include <vector>
@@ -12,7 +12,7 @@
 /**
  * @brief Represents a single drawable mesh of a 3D model
  *
- * A Mesh stores its own vertices, indices, and textures, and manages all 
+ * A Mesh stores its own vertices, indices and material, and manages all 
  * required OpenGL buffers (VAO, VBO, EBO). Once constructed, it can be drawn 
  * using a shader program. This class is typically used by Model to represent 
  * each submesh loaded via ASSIMP, but can be used independently.
@@ -22,25 +22,22 @@ class Mesh
 public:
 
     /**
-     * @brief Constructs a Mesh with the provided vertex, index, and texture data.
-     * 
-     * @param vertices List of Vertex structs defining the mesh geometry.
-     * @param indices Index buffer defining how vertices are connected.
-     * @param textures_info List of TextureInfo with all the textures info (uniform_name, path, type) needed for this mesh
-     *
-     * Initializes the mesh data and configures the OpenGL buffers required for rendering.
-     */
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<TextureInfo>& textures_info);
-
-    /**
      * @brief Constructs a Mesh with the provided vertex and index data.
      *
      * @param vertices List of Vertex structs defining the mesh geometry.
      * @param indices Index buffer defining how vertices are connected.
+     * @param material Pointer to a material to apply to the model
      *
      * Initializes the mesh data and configures the OpenGL buffers required for rendering.
      */
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
+    Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
+
+    /**
+     * @brief Returns the material configured in the mesh
+     *
+     * @return Material pointer.
+     */
+    Material* get_material() const { return m_material; }
 
     /**
      * @brief Renders the mesh using a given shader program.
@@ -49,24 +46,7 @@ public:
      *
      * Binds the VAO, submits the draw call, and restores OpenGL state.
      */
-    void draw() const;
-
-    /**
-     * @brief Add new texture info to the mesh textures list
-     *
-     * @param uniform_nam String with the name of the uniform to bind the texture to.
-     * @param path Path to the texture file in disk.
-     *
-     * Add new texture info to the list of textures that will be loaded later for render.
-     */
-    void add_textures_info(const std::string& uniform_name, const std::string& path);
-
-    /**
-     * @brief Returns the information for each texture used by this mesh
-     *
-     * @return A vector of TextureInfo containing the information for each texture
-     */
-    std::vector<TextureInfo> get_textures_info() const { return m_textures_info; };
+    void draw(ShaderProgram* shader) const;
 
 private:
 
@@ -83,8 +63,8 @@ private:
     std::vector<Vertex>       m_vertices;
     std::vector<unsigned int> m_indices;
 
-    // Textures data containing name of the uniform and path to the texture file
-    std::vector<TextureInfo>  m_textures_info;
+    // Material used to draw the mesh
+    Material* m_material;
 
     // OpenGL Render Data
     GLuint m_VAO;

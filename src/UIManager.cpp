@@ -1,6 +1,8 @@
 #include "UIManager.h"
 #include "Renderer.h"
 
+void textures_menu(MaterialManager& tex_mgr);
+
 void UIManager::init(GLFWwindow* window)
 {
 	//Setup Dear ImGui context
@@ -30,6 +32,9 @@ void UIManager::update()
 	/*DrawDockspace();
 	DrawHierarchy();
 	DrawViewport(FramebufferManager::instance().get_framebuffer("main"));*/
+    textures_menu(MaterialManager::instance());
+
+	//ImGui::ShowDemoWindow();
 }
 
 void UIManager::render() 
@@ -45,48 +50,60 @@ void  UIManager::terminate()
 	ImGui::DestroyContext();
 }
 
-//void textures_menu(TextureManager& tex_mgr)
-//{
-//    if (ImGui::Begin("Textures"))
-//    {
-//        float thumbnailSize = 64.0f;
-//        float padding = 16.0f;
-//
-//        float cellSize = thumbnailSize + padding;
-//        float panelWidth = ImGui::GetContentRegionAvail().x;
-//
-//        int columns = (int)(panelWidth / cellSize);
-//        if (columns < 1) columns = 1;
-//
-//        ImGui::Columns(columns, 0, false);
-//
-//        for (auto& kv : tex_mgr.get_all_textures())
-//        {
-//            Texture* tex = kv.second.get();
-//
-//            ImGui::BeginGroup();
-//
-//            // Muestra la miniatura
-//            ImGui::Image(
-//                (void*)(intptr_t)tex->get_id(),
-//                ImVec2(thumbnailSize, thumbnailSize),
-//                ImVec2(0, 1),    // UV invertido (dependiendo de tu motor)
-//                ImVec2(1, 0)
-//            );
-//
-//            // Muestra el nombre debajo
-//            ImGui::TextWrapped("%s", kv.first.c_str());
-//
-//            ImGui::EndGroup();
-//
-//            ImGui::NextColumn();
-//        }
-//
-//        ImGui::Columns(1);
-//    }
-//    ImGui::End();
-//}
-//
+void textures_menu(MaterialManager& mat_mgr)
+{
+    if (ImGui::Begin("Textures"))
+    {
+        float thumbnailSize = 64.0f;
+        float padding = 16.0f;
+
+        /*float cellSize = thumbnailSize + padding;
+        float panelWidth = ImGui::GetContentRegionAvail().x;
+
+        int columns = (int)(panelWidth / cellSize);
+        if (columns < 1) columns = 1;*/
+
+        //ImGui::Columns(columns, 0, false);
+
+        for (auto& [matName, material] : mat_mgr.get_all_materials())
+        {
+            // Crea un nodo por material
+            if (ImGui::TreeNode(matName.c_str()))
+            {
+                // Asegura IDs únicos por cada material
+                ImGui::PushID(matName.c_str());
+
+                for (auto& [texName, tex] : material->get_all_textures())
+                {
+                    ImGui::PushID(texName.c_str());
+
+                    // Imagen de la textura
+                    ImGui::Image(
+                        (void*)(intptr_t)tex->get_id(),
+                        ImVec2(thumbnailSize, thumbnailSize),
+                        ImVec2(0, 1),
+                        ImVec2(1, 0)
+                    );
+
+                    ImGui::SameLine();
+                    ImGui::TextWrapped("%s", texName.c_str());
+
+                    ImGui::PopID();
+
+                    // Espacio entre texturas
+                    ImGui::Dummy(ImVec2(0, padding));
+                }
+
+                ImGui::PopID();
+                ImGui::TreePop();
+            }
+        }
+
+        //ImGui::Columns(1);
+    }
+    ImGui::End();
+}
+
 //void DrawDockspace()
 //{
 //    static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;

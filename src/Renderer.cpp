@@ -140,9 +140,18 @@ void Renderer::render_scene()
 		SPDLOG_ERROR("Invalid FBO for Main Pass");
 		return;
 	}
+
+	// Set shader for this pass
+	ShaderProgram* shader = ShaderManager::instance().get_program("lighting_phong");
+
+	if (!shader)
+	{
+		SPDLOG_ERROR("Error getting the shader program for rendering pass");
+		return;
+	}
 	
 	fbo->bind();
-	render_all_models();
+	render_all_models(shader);
 	fbo->unbind();
 
 	//TODO: More passes??
@@ -161,7 +170,7 @@ void Renderer::render_scene()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void Renderer::render_all_models()
+void Renderer::render_all_models(ShaderProgram* shader)
 {
 	// Clear screen with out default clear color
 	glClearColor(0.16f, 0.18f, 0.20f, 1.0f);
@@ -181,56 +190,35 @@ void Renderer::render_all_models()
 	glm::mat4 view_mat = camera->get_view_matrix();
 	glm::mat4 projection_mat = glm::perspective(glm::radians(camera->get_fov()), aspect, 0.1f, 100.0f);
 
+	shader->bind();
+
+	// Scene data
+	shader->set_uniform("view", view_mat);
+	shader->set_uniform("projection", projection_mat);
+	shader->set_uniform("view_pos", camera->get_position());
+	
+	// Lights
+	// TODO: This loop is to add the possibility to add more lights in the future
+	// Now we only will see the last light added to the scene
+	for (const auto& light : m_scene->get_scene_lights())
+	{
+		shader->set_uniform("light.position", light->get_position());
+		shader->set_uniform("light.ambient", light->get_ambient());
+		shader->set_uniform("light.diffuse", light->get_diffuse());
+		shader->set_uniform("light.specular", light->get_specular());
+	}
+
 	// Iterate all scene objects calling each draw function
 	for (const Model* model : m_scene->get_scene_models())
 	{
-		Material* material = model->get_material();
-
-		if (!material)
-		{
-			SPDLOG_ERROR("Error getting the material for rendering model: {}", model->get_name());
-			continue;
-		}
-			
-		// Get shader from material
-		ShaderProgram* shader = material->get_shader();
-
-		if (!shader)
-		{
-			SPDLOG_ERROR("Error getting the shader program for rendering model: {}", model->get_name());
-			continue;
-		}
-
-		shader->bind();
-
-		// Scene data
+		// Model data
 		shader->set_uniform("model", model->get_model_matrix());
-		shader->set_uniform("view", view_mat);
-		shader->set_uniform("projection", projection_mat);
-		shader->set_uniform("view_pos", camera->get_position());
-
-		// Lights
-		// TODO: This loop is to add the possibility to add more lights in the future
-		// Now we only will see the last light added to the scene
-		for (const auto& light : m_scene->get_scene_lights())
-		{
-			shader->set_uniform("light.position", light->get_position());
-			shader->set_uniform("light.ambient", light->get_ambient());
-			shader->set_uniform("light.diffuse", light->get_diffuse());
-			shader->set_uniform("light.specular", light->get_specular());
-		}
-
-		// Bind material textures
-		material->bind_textures();
-
-		// Set specific material uniforms
-		material->apply_uniforms();
 
 		// Draw model geometry
-		model->draw();
-
-		shader->unbind();
+		model->draw(shader);
 	}
+
+	shader->unbind();
 }
 
 void Renderer::resize(int width, int height)

@@ -16,6 +16,7 @@ file(GLOB_RECURSE SRC_FILES
     "UIManager.cpp"
     "InputManager.cpp"
     "Material.cpp"
+    "MaterialManager.cpp"
     "PhongMaterial.cpp"
 )
 

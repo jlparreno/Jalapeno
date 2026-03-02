@@ -19,6 +19,8 @@ Texture* TextureManager::load_texture(const std::string& name, const std::string
     //Move data to the manager array
     m_textures[name] = std::move(tex);
 
+    SPDLOG_INFO("New texture loaded: {}", name);
+
     //Return the pointer to the new texture
     return m_textures[name].get();
 }

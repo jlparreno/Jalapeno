@@ -25,6 +25,7 @@ void InputManager::process_input(GLFWwindow* window)
         Renderer::instance().get_scene()->get_active_camera()->process_keyboard(LEFT, renderer.delta_time);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         Renderer::instance().get_scene()->get_active_camera()->process_keyboard(RIGHT, renderer.delta_time);
+
 }
 
 
@@ -71,9 +72,15 @@ void InputManager::mouse_cursor_pos_callback(GLFWwindow* window, double xposIn, 
     {
         renderer.first_mouse = true;
     }
+
+    // Call internal backend callback
+    ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
 }
 
 void InputManager::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     Renderer::instance().get_scene()->get_active_camera()->process_mouse_scroll(static_cast<float>(yoffset));
+
+    // Call internal backend callback
+    ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 }

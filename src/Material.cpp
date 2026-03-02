@@ -1,34 +1,29 @@
 #include "Material.h"
 
-Material::Material(const std::string& name, ShaderProgram* shader) :
-    m_name(name),
-    m_shader(shader)
+Material::Material(const std::string& name, MaterialType type) : 
+    m_name(name), 
+    m_type(type)
 {
 }
 
-void Material::load_textures(const std::vector<TextureInfo>& textures)
+void Material::add_texture(const std::string& name, const std::string& path, const std::string& type_name, bool vertical_flip)
 {
-    for (const auto& tex_info : textures)
-    {
-        // Avoid duplicates
-        if (m_textures.find(tex_info.uniform_name) != m_textures.end())
-            continue;
-        
-        // Load with TextureManager to have centralized control and add the pointer to the material
-        Texture* texture = TextureManager::instance().load_texture(tex_info.name, tex_info.file_path, true);
-        m_textures[tex_info.uniform_name] = texture;
+    Texture* texture = TextureManager::instance().load_texture(name, path, vertical_flip, true);
 
-        SPDLOG_INFO("New texture loaded from {} material: {}", m_name, tex_info.name);
-    }
+    // At the moment only one texture per type (last loaded)
+    // TODO: uniform_name = "diffuse_tex" + std::to_string(i + 1);
+    std::string uniform_name{ type_name + "_tex" };
+    
+    m_textures[uniform_name] = texture;
 }
 
-void Material::bind_textures() const
+void Material::bind_textures(ShaderProgram* shader) const
 {
     int unit = 0;
     for (const auto& [uniform_name, tex] : m_textures)
     {
         tex->bind(unit);
-        m_shader->set_uniform(uniform_name, unit);
+        shader->set_uniform(uniform_name, unit);
         unit++;
     }
 }

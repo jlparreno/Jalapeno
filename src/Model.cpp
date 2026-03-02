@@ -3,7 +3,6 @@
 Model::Model(const std::string& name, const std::string& path) :
     m_name(name), 
     m_directory(""),
-    m_material(nullptr),
     m_position(glm::vec3(0.0f,0.0f,0.0f)),
     m_scale(glm::vec3(1.0f, 1.0f, 1.0f)),
     m_rotation(glm::vec3(0.0f, 0.0f, 0.0f))
@@ -11,12 +10,12 @@ Model::Model(const std::string& name, const std::string& path) :
     load_model(path);
 }
 
-void Model::draw() const
+void Model::draw(ShaderProgram* shader) const
 {
     //Call to draw all meshes that compose the model
     for (unsigned int i = 0; i < m_meshes.size(); i++)
     {
-        m_meshes[i].draw();
+        m_meshes[i].draw(shader);
     }
 }
 
@@ -33,8 +32,10 @@ void Model::load_model(const std::string& path)
         return;
     }
 
-    // Retrieve the directory path, including last slash
-    m_directory = path.substr(0, path.find_last_of('/') + 1);
+    // Retrieve the directory path, including last slash, and file format
+    std::filesystem::path file_path(path);
+    m_directory = file_path.parent_path().string() + "/";
+    m_format = file_path.extension().string();
 
     // Process ASSIMP's root node recursively
     process_node(scene->mRootNode, scene);
@@ -65,7 +66,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     // Data to fill
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
-    std::vector<TextureInfo>  textures;
+    //std::vector<TextureInfo>  textures;
 
     // Iterate mesh vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -136,32 +137,50 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         }
     }
 
-    // Material textures info
+    // Load materials into Material Manager
+    auto& material_mgr = MaterialManager::instance();
+
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    
+    MaterialType material_type = material_mgr.get_material_type(material);
+    std::string material_name = material->GetName().Empty() ? std::to_string(mesh->mMaterialIndex) : material->GetName().C_Str();
+
+    switch (material_type)
+    {
+        // TODO: Other types, at the moment only Phong supported
+        /*case MaterialType::PBR:
+            mat = material_mgr.add_material<PBRMaterial>(material_name);
+            break;*/
+
+        case MaterialType::Phong:
+            material_mgr.add_material<PhongMaterial>(material_name);
+            break;
+    }
+
+    // Set if we want vertical flip or not. At the moment, based on file format
+    bool vertical_flip = false;
+    if (m_format == ".obj")
+        vertical_flip = true;
 
     // Diffuse Maps
-    std::vector<TextureInfo> diffuse_textures = get_material_textures_info(material, aiTextureType_DIFFUSE, "diffuse");
-    textures.insert(textures.end(), diffuse_textures.begin(), diffuse_textures.end());
+    load_material_textures(material, material_name, aiTextureType_DIFFUSE, "diffuse", vertical_flip);
 
     // Specular Maps
-    std::vector<TextureInfo> specular_textures = get_material_textures_info(material, aiTextureType_SPECULAR, "specular");
-    textures.insert(textures.end(), specular_textures.begin(), specular_textures.end());
+    load_material_textures(material, material_name, aiTextureType_SPECULAR, "specular", vertical_flip);
 
     // Normal Maps
-    std::vector<TextureInfo> normal_textures = get_material_textures_info(material, aiTextureType_NORMALS, "normal");
-    textures.insert(textures.end(), normal_textures.begin(), normal_textures.end());
+    load_material_textures(material, material_name, aiTextureType_NORMALS, "normal", vertical_flip);
 
     // Height Maps
-    std::vector<TextureInfo> height_textures = get_material_textures_info(material, aiTextureType_HEIGHT, "height");
-    textures.insert(textures.end(), height_textures.begin(), height_textures.end());
+    load_material_textures(material, material_name, aiTextureType_HEIGHT, "height", vertical_flip);
     
     // Return a mesh object created from the extracted mesh data
-    return Mesh(vertices, indices, textures);
+    return Mesh(vertices, indices, material_mgr.get_material(material_name));
 }
 
-std::vector<TextureInfo> Model::get_material_textures_info(aiMaterial* mat, aiTextureType type, std::string type_name)
+void Model::load_material_textures(aiMaterial* mat, const std::string& material_name, aiTextureType type, const std::string& type_name, bool vertical_flip)
 {
-    std::vector<TextureInfo> textures;
+    auto& material_mgr = MaterialManager::instance();
 
     // Iterate material textures
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
@@ -170,47 +189,14 @@ std::vector<TextureInfo> Model::get_material_textures_info(aiMaterial* mat, aiTe
         aiString str;
         mat->GetTexture(type, i, &str);
 
+        // Texture path to save loaded
         // Get texture name: texture name from file path
-        std::filesystem::path texture_path{ str.C_Str() };
+        std::filesystem::path texture_path{ m_directory + str.C_Str() };
         std::string texture_name = texture_path.stem().string();
 
-        TextureInfo info;
-        info.name = m_name + "_" + texture_name;
-        info.file_path = m_directory + str.C_Str();
-        info.type_name = type_name;
-
-        switch (type)
-        {
-        case aiTextureType_DIFFUSE:
-            //At the moment only one texture per type (last loaded)
-            //info.uniform_name = "diffuse_tex" + std::to_string(i + 1);
-            info.uniform_name = "diffuse_tex";
-            break;
-        case aiTextureType_NORMALS:
-            info.uniform_name = "normal_tex";
-            break;
-        case aiTextureType_SPECULAR:
-            info.uniform_name = "specular_tex";
-            break;
-        case aiTextureType_HEIGHT:
-            info.uniform_name = "height_tex";
-            break;
-        }    
-
-        textures.push_back(info);
-    }
-
-    return textures;
-}
-
-void Model::set_material(Material* material) 
-{ 
-    m_material = material; 
-
-    // Loads all material textures
-    for (auto mesh : m_meshes)
-    {
-        material->load_textures(mesh.get_textures_info());
+        // Create or get the material and initialize texture
+        Material* material = material_mgr.get_material(material_name);
+        material->add_texture(texture_name, texture_path.string(), type_name, vertical_flip);
     }
 }
 

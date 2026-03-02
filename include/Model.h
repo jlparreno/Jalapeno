@@ -10,9 +10,11 @@
 #include <spdlog/spdlog.h>
 
 #include "TextureManager.h"
+#include "MaterialManager.h"
 #include "ShaderProgram.h"
 #include "Mesh.h"
 #include "Material.h"
+#include "PhongMaterial.h"
 #include "types.h"
 
 #include <string>
@@ -56,9 +58,11 @@ public:
     /**
      * @brief Draws the model using the provided shader program.
      *
+     * @param shader Pointer to the ShaderProgram used to draw the mesh.
+     * 
      * Iterates over all stored meshes and calls their draw function.
      */
-    void draw() const;
+    void draw(ShaderProgram* shader) const;
 
     /**
      * @brief Returns the model name.
@@ -66,22 +70,6 @@ public:
      * @return Model name string.
      */
     std::string get_name() const { return m_name; };
-
-    /**
-     * @brief Sets the material for drawing this model.
-     *
-     * @param material Pointer to the material to apply to the model.
-     * 
-     * Loads all the textures associated to the material if they haven't been loaded previously
-     */
-    void set_material(Material* material);
-    
-    /**
-     * @brief Returns the material configured in the model
-     *
-     * @return Material pointer.
-     */
-    Material* get_material() const { return m_material; }
 
     /**
      * @brief Sets a new position for the model.
@@ -136,15 +124,14 @@ private:
     Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
 
     /**
-     * @brief Gets all material textures info of a specific type for a mesh.
+     * @brief Gets all material textures of a specific type, loads them and creates the material
      *
      * @param mat Pointer to the aiMaterial containing textures.
      * @param type Type of texture to load (e.g., diffuse, specular).
-     * @param typeName Name identifier for the texture type.
-     * 
-     * @return std::vector<TextureInfo> Vector of TextureInfo containing the uniform name and the path of the texture
+     * @param type_name Name identifier for the texture type.
+     * @param vertical_flip Wether the textures should be flipper vertically or not.
      */
-    std::vector<TextureInfo> get_material_textures_info(aiMaterial* mat, aiTextureType type, std::string type_name);
+    void load_material_textures(aiMaterial* mat, const std::string& material_name, aiTextureType type, const std::string& type_name, bool vertical_flip = false);
 
 
     // MODEL DATA
@@ -155,11 +142,11 @@ private:
     // Directory path of the model file
     std::string           m_directory;
 
+    // Original format of model (OBJ, GLTF...)
+    std::string           m_format;
+
     // All the meshes of the model
     std::vector<Mesh>     m_meshes;
-
-    // Material used to draw the model
-    Material*             m_material;
 
     // Transforms for this model
     glm::vec3             m_position;
