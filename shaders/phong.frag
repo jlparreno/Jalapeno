@@ -33,16 +33,21 @@ out vec4 FragColor;
 
 void main()
 {
+    // Discard transparent fragments
+    vec4 diffSample = texture(diffuse_tex, TexCoords);
+    if (diffSample.a < 0.5)
+        discard;
+
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.position - FragPos);
     vec3 viewDir = normalize(view_pos - FragPos);
 
     // Ambient
-    vec3 ambient = light.ambient * vec3(texture(diffuse_tex, TexCoords));
+    vec3 ambient = light.ambient * diffSample.xyz;
 
     // Diffuse
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * vec3(texture(diffuse_tex, TexCoords));
+    vec3 diffuse = light.diffuse * diff * diffSample.xyz;
 
     //Specular
     vec3 reflectDir = reflect(-lightDir, norm);

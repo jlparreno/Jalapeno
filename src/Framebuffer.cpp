@@ -1,8 +1,8 @@
 #include "Framebuffer.h"
 
-Framebuffer::Framebuffer(int width, int height)
+Framebuffer::Framebuffer(int width, int height, int samples)
 {
-    create(width, height);
+    create(width, height, samples);
 }
 
 Framebuffer::~Framebuffer()
@@ -10,7 +10,7 @@ Framebuffer::~Framebuffer()
     destroy();
 }
 
-void Framebuffer::create(int width, int height)
+void Framebuffer::create(int width, int height, int samples)
 {
     destroy(); // In case it already existed
 
@@ -20,7 +20,7 @@ void Framebuffer::create(int width, int height)
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-    create_attachments();
+    create_attachments(samples);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -60,26 +60,44 @@ void Framebuffer::destroy()
     m_depth_attachment = 0;
 }
 
-void Framebuffer::create_attachments()
+void Framebuffer::create_attachments(int samples)
 {
+    auto texture_mode = samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+
     // Color Attachment
     GLuint color_texture;
     glGenTextures(1, &color_texture);
-    glBindTexture(GL_TEXTURE_2D, color_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_width, m_height, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindTexture(texture_mode, color_texture);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if (samples > 1)
+    {
+        glTexImage2DMultisample(texture_mode, samples, GL_RGBA16F, m_width, m_height, GL_TRUE);
+    }
+    else
+    {
+        glTexImage2D(texture_mode, 0, GL_RGBA16F, m_width, m_height, 0, GL_RGBA, GL_FLOAT, NULL);
+    }
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0);
+    glTexParameteri(texture_mode, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(texture_mode, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_mode, color_texture, 0);
     m_color_attachments.push_back(color_texture);
 
-    // Depth Attachment
+    // Depth-Stencil Attachment
     glGenTextures(1, &m_depth_attachment);
-    glBindTexture(GL_TEXTURE_2D, m_depth_attachment);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+    glBindTexture(texture_mode, m_depth_attachment);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depth_attachment, 0);
+    if (samples > 1)
+    {
+        glTexImage2DMultisample(texture_mode, samples, GL_DEPTH24_STENCIL8, m_width, m_height, GL_TRUE);
+    }
+    else
+    {
+        glTexImage2D(texture_mode, 0, GL_DEPTH24_STENCIL8, m_width, m_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+    }
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, texture_mode, m_depth_attachment, 0);
 }
 
 void Framebuffer::bind() const

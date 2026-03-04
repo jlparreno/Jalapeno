@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include "config.h"
+
 Renderer::Renderer(const std::string& name, int width, int height) :
 	m_name(name),
 	m_window(nullptr),
@@ -24,7 +26,7 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 
 	// Create needed framebuffers
 	auto& framebuffer_mgr = FramebufferManager::instance();
-	framebuffer_mgr.create_framebuffer("main", SRC_WIDTH, SRC_HEIGHT);
+	framebuffer_mgr.create_framebuffer("main", SRC_WIDTH, SRC_HEIGHT, NUM_SAMPLES);
 }
 
 void Renderer::run()
@@ -162,7 +164,7 @@ void Renderer::render_scene()
 
 	glViewport(0, 0, m_width, m_height);
 	
-	// Blit operation (only color at the moment)
+	// Blit operation (only color at the moment). If our FBO is multi-sampled, this vlit will resolve into the GLFW FBO (no MS)
 	glBlitFramebuffer(0, 0, fbo->get_width(), fbo->get_height(), 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	// Unbind

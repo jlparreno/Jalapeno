@@ -60,10 +60,11 @@ public:
      * @param name Unique identifier for the framebuffer.
      * @param width Width in pixels.
      * @param height Height in pixels.
+     * @param samples Num of samples of the framebuffer (MSAA)
      * 
      * @return Pointer to the created framebuffer.
      */
-    Framebuffer* create_framebuffer(const std::string& name, int width, int height);
+    Framebuffer* create_framebuffer(const std::string& name, int width, int height, int samples = 1);
 
     /**
      * @brief Retrieves a framebuffer by name.

@@ -1,6 +1,6 @@
 #include "FramebufferManager.h"
 
-Framebuffer* FramebufferManager::create_framebuffer(const std::string& name, int width, int height)
+Framebuffer* FramebufferManager::create_framebuffer(const std::string& name, int width, int height, int samples)
 {
     // Check if framebuffer already exists
     auto it = m_framebuffers.find(name);
@@ -10,7 +10,7 @@ Framebuffer* FramebufferManager::create_framebuffer(const std::string& name, int
     }
 
     // Create or overwrite the framebuffer
-    auto fbo = std::make_unique<Framebuffer>(width, height);
+    auto fbo = std::make_unique<Framebuffer>(width, height, samples);
 
     // Move new framebuffer to the manager array
     m_framebuffers[name] = std::move(fbo);

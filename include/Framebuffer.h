@@ -27,8 +27,9 @@ public:
      * 
      * @param width Width of the framebuffer in pixels.
      * @param height Height of the framebuffer in pixels.
+     * @param samples Num of samples of the framebuffer (MSAA)
      */
-    Framebuffer(int width, int height);
+    Framebuffer(int width, int height, int samples = 1);
 
     /**
      * @brief Destroys the framebuffer and all its attachments.
@@ -40,10 +41,11 @@ public:
      * 
      * @param width New width in pixels.
      * @param height New height in pixels.
+     * @param samples Num of samples of the framebuffer (MSAA)
      *
      * If the framebuffer already existed, it is destroyed first.
      */
-    void create(int width, int height);
+    void create(int width, int height, int samples = 1);
 
     /**
      * @brief Resizes the framebuffer, recreating all attachments.
@@ -101,12 +103,14 @@ private:
     void destroy();
 
     /**
-     * @brief Creates the color and depth-stencil attachments.
+     * @brief Creates the color and depth-stencil attachments
+     * 
+     * @param samples Num of samples of the attachments (MSAA).
      *
-     * The attachments are allocated with floating HDR color format (RGBA16F)
-     * and depth-stencil format (DEPTH24_STENCIL8).
+     * The attachments are allocated with floating HDR color format (RGBA16F) and depth-stencil format (DEPTH24_STENCIL8).
+     * By default, simple attachments without MSAA are created. If samples > 1 then MSAA attachments are created.
      */
-    void create_attachments();
+    void create_attachments(int samples = 1);
 
     // Framebuffer Object ID
     GLuint m_fbo = 0;
