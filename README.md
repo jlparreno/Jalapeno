@@ -1,9 +1,29 @@
-# Jalapeno Render Engine
+# Jalapeno
 
-My new OpenGL render engine from scratch.
+`Jalapeno` is a render engine built on OpenGL from scratch. It is in very early development stage, still a lot to do.
+It’s designed for experiments and real-time graphics research.
 
-This is a first version and still a lot to do.
-At the moment only tested in Windows and Visual Studio 2026.
+## Features
+
+- **Forward Pipeline**
+  - At the moment only a simple forward pass has been implemented
+  
+- **Assimp Models and Materials Import**
+  - Support for loading any model supported by Assimp library.
+  - Only basic Materials are supported now, with asssociated textures.
+
+- **Anti-Aliasing**
+  - Configurable MSAA
+
+## Screenshots
+
+![Screenshot](screenshots/screenshot.png)
+
+## Controls
+| Key        | Action                   |
+|------      |--------------------------|
+| WASD       | Move                     |
+| Alt + LMB  | Camera rotation          |
 
 ## Folder structure
 
@@ -13,10 +33,3 @@ At the moment only tested in Windows and Visual Studio 2026.
 - `textures/` - Textures
 - `models/` - Models
 - `third_party/` - External libraries
-
-## Basic usage
-
-1. Clone the repo
-2. Create build folder and go inside it
-3. Execute "cmake .. -DLOG_LEVEL=trace -G "Visual Studio 18 2026"
-4. Open Visual Studio, compile and enjoy!
