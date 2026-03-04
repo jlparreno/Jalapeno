@@ -6,15 +6,6 @@
 
 #define MAX_BONE_INFLUENCE 4
 
-using UniformValue = std::variant<
-    float, 
-    glm::vec2, 
-    glm::vec3, 
-    glm::vec4, 
-    glm::mat4, 
-    int
->;
-
 /**
 * @enum ShaderType
 * @brief Enum representing different types of GLSL shader stages
@@ -39,12 +30,6 @@ enum class MaterialType
 {
     Phong,
     PBR
-};
-
-struct MaterialUniform 
-{
-    std::string name;
-    UniformValue value;
 };
 
 struct Vertex
