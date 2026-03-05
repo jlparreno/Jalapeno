@@ -38,5 +38,5 @@ private:
     glm::vec3 m_diffuse_color { 1.0f, 1.0f, 1.0f };
     glm::vec3 m_specular_color{ 1.0f, 1.0f, 1.0f };
 
-    float     m_shininess{ 64.0f };
+    float     m_shininess{ 32.0f };
 };

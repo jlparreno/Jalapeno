@@ -10,24 +10,15 @@ Material* MaterialManager::get_material(const std::string& name)
 
 MaterialType MaterialManager::get_material_type(const aiMaterial* mat)
 {
-    // Check PBR attributes
-    /*if (mat->GetTextureCount(aiTextureType_METALNESS) > 0) return MaterialType::PBR;
-    if (mat->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0) return MaterialType::PBR;
+    // Check PBR attributes: metallic o roughness
+    float metallic = 0.0f;
+    float roughness = 0.0f;
 
-    float metallic, roughness;
-    if (AI_SUCCESS == mat->Get(AI_MATKEY_METALLIC_FACTOR, metallic)) return MaterialType::PBR;
-    if (AI_SUCCESS == mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness)) return MaterialType::PBR;*/
+    bool has_metallic = mat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS;
+    bool has_roughness = mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS;
 
-    // Check Phong
-    /*aiColor3D diffuse, specular;
-    float shininess;
-
-    if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse)) return MaterialType::Phong;
-    if (AI_SUCCESS == mat->Get(AI_MATKEY_COLOR_SPECULAR, specular)) return MaterialType::Phong;
-    if (AI_SUCCESS == mat->Get(AI_MATKEY_SHININESS, shininess)) return MaterialType::Phong;*/
-
-    // Generic case
-    /*return MaterialType::Generic;*/
+    if (has_metallic || has_roughness)
+        return MaterialType::PBR;
 
     // Only phong supported now
     return MaterialType::Phong;

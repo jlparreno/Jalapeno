@@ -16,6 +16,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "PhongMaterial.h"
+#include "PBRMaterial.h"
 #include "types.h"
 
 #include <string>

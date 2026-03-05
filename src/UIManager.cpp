@@ -1,7 +1,7 @@
 #include "UIManager.h"
 #include "Renderer.h"
 
-void textures_menu(MaterialManager& tex_mgr);
+void materials_menu(MaterialManager& tex_mgr);
 
 void UIManager::init(GLFWwindow* window)
 {
@@ -32,7 +32,7 @@ void UIManager::update()
 	/*DrawDockspace();
 	DrawHierarchy();
 	DrawViewport(FramebufferManager::instance().get_framebuffer("main"));*/
-    textures_menu(MaterialManager::instance());
+    materials_menu(MaterialManager::instance());
 
 	//ImGui::ShowDemoWindow();
 }
@@ -50,9 +50,9 @@ void  UIManager::terminate()
 	ImGui::DestroyContext();
 }
 
-void textures_menu(MaterialManager& mat_mgr)
+void materials_menu(MaterialManager& mat_mgr)
 {
-    if (ImGui::Begin("Textures"))
+    if (ImGui::Begin("Materials"))
     {
         float thumbnailSize = 64.0f;
         float padding = 16.0f;

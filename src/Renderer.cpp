@@ -21,6 +21,7 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 
 	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
 	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
+	shader_mgr.load_program("pbr", { shader_dir + "simple_lighting.vert", shader_dir + "pbr.frag" });
 
 	SPDLOG_INFO("Creating main Framebuffer");
 
@@ -31,6 +32,9 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 
 void Renderer::run()
 {
+	// Enable alpha to coverage to manage blending for now
+	glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+
 	// Main renderer loop
 	while (!glfwWindowShouldClose(m_window))
 	{
@@ -202,16 +206,8 @@ void Renderer::draw_all_renderables()
 			shader->set_uniform("projection", projection_mat);
 			shader->set_uniform("view_pos", camera->get_position());
 
-			// Lights
-			// TODO: This loop is to add the possibility to add more lights in the future
-			// Now we only will see the last light added to the scene
-			for (const auto& light : m_scene->get_scene_lights())
-			{
-				shader->set_uniform("light.position", light->get_position());
-				shader->set_uniform("light.ambient", light->get_ambient());
-				shader->set_uniform("light.diffuse", light->get_diffuse());
-				shader->set_uniform("light.specular", light->get_specular());
-			}
+			//Upload lights data to the shader
+			upload_lights(shader);
 
 			material->apply_uniforms(shader);
 
@@ -220,6 +216,38 @@ void Renderer::draw_all_renderables()
 			shader->unbind();
 		}
 	}
+}
+
+void Renderer::upload_lights(ShaderProgram* shader)
+{
+	int point_index = 0;
+	int directional_index = 0;
+
+	for (auto& light : m_scene->get_scene_lights())
+	{
+		if (auto* pl = dynamic_cast<PointLight*>(light.get()))
+		{
+			std::string base = "u_point_lights[" + std::to_string(point_index) + "].";
+			shader->set_uniform(base + "position", pl->get_position());
+			shader->set_uniform(base + "color", pl->get_color());
+			shader->set_uniform(base + "intensity", pl->get_intensity());
+			shader->set_uniform(base + "constant", pl->get_constant());
+			shader->set_uniform(base + "linear", pl->get_linear());
+			shader->set_uniform(base + "quadratic", pl->get_quadratic());
+			point_index++;
+		}
+		else if (auto* dl = dynamic_cast<DirectionalLight*>(light.get()))
+		{
+			std::string base = "u_directional_lights[" + std::to_string(directional_index) + "].";
+			shader->set_uniform(base + "direction", dl->get_direction());
+			shader->set_uniform(base + "color", dl->get_color());
+			shader->set_uniform(base + "intensity", dl->get_intensity());
+			directional_index++;
+		}
+	}
+
+	shader->set_uniform("u_num_point_lights", point_index);
+	shader->set_uniform("u_num_directional_lights", directional_index);
 }
 
 void Renderer::resize(int width, int height)
@@ -257,6 +285,7 @@ void Renderer::terminate()
 	auto& shader_mgr = ShaderManager::instance();
 	glDeleteProgram(shader_mgr.get_program("lambert")->get_id());
 	glDeleteProgram(shader_mgr.get_program("phong")->get_id());
+	glDeleteProgram(shader_mgr.get_program("pbr")->get_id());
 
 	// TODO: Check if loaded models buffers are correctly destroyed
 	//glDeleteVertexArrays(1, &cube_VAO);

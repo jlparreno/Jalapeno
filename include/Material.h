@@ -48,17 +48,6 @@ public:
     void add_texture(const std::string& name, const std::string& path, const std::string& type_name, bool vertical_flip = false);
 
     /**
-     * @brief Binds all textures associated with this material to the GPU.
-     *
-     * @param shader Pointer to the ShaderProgram that will receive the textures.
-     *
-     * This function assigns available texture units sequentially and binds each
-     * stored texture to the corresponding uniform in the shader. It should be
-     * called before any draw call that uses this material.
-     */
-    void bind_textures(ShaderProgram* shader) const;
-
-    /**
      * @brief Returns the material's identifier name.
      *
      * @return String reference used to identify the material.
@@ -91,6 +80,18 @@ public:
      * metallic, emission, or other material-specific parameters.
      */
     virtual void apply_uniforms(ShaderProgram* shader) const = 0;
+
+
+    /**
+     * @brief Binds all textures associated with this material to the GPU.
+     *
+     * @param shader Pointer to the ShaderProgram that will receive the textures.
+     *
+     * This function assigns available texture units sequentially and binds each
+     * stored texture to the corresponding uniform in the shader. It should be
+     * called before any draw call that uses this material.
+     */
+    virtual void bind_textures(ShaderProgram* shader) const;
 
 protected:
 

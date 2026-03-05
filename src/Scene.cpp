@@ -32,12 +32,28 @@ Sphere* Scene::add_sphere(const std::string& name)
 	return ptr;
 }
 
-Light* Scene::add_light(const std::string& name)
+PointLight* Scene::add_point_light(const std::string& name, const glm::vec3& position, const glm::vec3& color, float intensity)
 {
-	auto light = std::make_unique<Light>(name);
-	m_lights[light->get_name()] = std::move(light);
+	auto light = std::make_unique<PointLight>(name, position, color, intensity);
 
-	return m_lights[name].get();
+	PointLight* ptr = light.get();
+	m_lights.push_back(std::move(light));
+
+	SPDLOG_INFO("Added new point light to the scene: {}", name);
+
+	return ptr;
+}
+
+DirectionalLight* Scene::add_directional_light(const std::string& name, const glm::vec3& direction, const glm::vec3& color, float intensity)
+{
+	auto light = std::make_unique<DirectionalLight>(name, direction, color, intensity);
+
+	DirectionalLight* ptr = light.get();
+	m_lights.push_back(std::move(light));
+
+	SPDLOG_INFO("Added new directional light to the scene: {}", name);
+
+	return ptr;
 }
 
 std::vector<const Renderable*> Scene::get_scene_renderables() const
@@ -66,19 +82,6 @@ std::vector<const Camera*> Scene::get_scene_cameras() const
 	return result;
 }
 
-std::vector<const Light*> Scene::get_scene_lights() const
-{
-	std::vector<const Light*> result;
-	result.reserve(m_lights.size());
-
-	for (const auto& [name, light] : m_lights)
-	{
-		result.push_back(light.get());
-	}
-
-	return result;
-}
-
 Renderable* Scene::get_renderable(const std::string& name)
 {
 	if (m_renderables.find(name) == m_renderables.end())
@@ -99,15 +102,4 @@ Camera* Scene::get_camera(const std::string& name)
 	}
 
 	return m_cameras[name].get();
-}
-
-Light* Scene::get_light(const std::string& name)
-{
-	if (m_lights.find(name) == m_lights.end())
-	{
-		SPDLOG_ERROR("Light {} does not exist");
-		return nullptr;
-	}
-
-	return m_lights[name].get();
 }

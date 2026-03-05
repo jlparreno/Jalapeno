@@ -101,8 +101,6 @@ public:
     void resize(int width, int height);
 
 
-
-
     // Timing
     float delta_time = 0.0f;	// Time between current frame and last frame
     float last_frame = 0.0f;    // Time of last frame
@@ -151,6 +149,8 @@ private:
 
     // TODO: Function to bind an specific framebuffer by name
     // void bind_framebuffer(const std::string& name);
+
+    void upload_lights(ShaderProgram* shader);
 
     /**
      * @brief Cleans up the renderer before shutdown.

@@ -20,7 +20,12 @@ void Model::load_model(const std::string& path)
 {
     // Read file with ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    const aiScene* scene = importer.ReadFile(path, 
+        aiProcess_Triangulate | 
+        aiProcess_GenSmoothNormals | 
+        aiProcess_FlipUVs | 
+        aiProcess_CalcTangentSpace |
+        aiProcess_JoinIdenticalVertices);
 
     // Check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
@@ -142,10 +147,9 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
 
     switch (material_type)
     {
-        // TODO: Other types, at the moment only Phong supported
-        /*case MaterialType::PBR:
-            mat = material_mgr.add_material<PBRMaterial>(material_name);
-            break;*/
+        case MaterialType::PBR:
+            material_mgr.add_material<PBRMaterial>(material_name);
+            break;
 
         case MaterialType::Phong:
             material_mgr.add_material<PhongMaterial>(material_name);
@@ -157,17 +161,51 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (m_format == ".obj")
         vertical_flip = true;
 
-    // Diffuse Maps
-    load_material_textures(material, material_name, aiTextureType_DIFFUSE, "diffuse", vertical_flip);
+    if (material_type == MaterialType::PBR)
+    {
+        PBRMaterial* pbr_mat = static_cast<PBRMaterial*>(material_mgr.get_material(material_name));
 
-    // Specular Maps
-    load_material_textures(material, material_name, aiTextureType_SPECULAR, "specular", vertical_flip);
+        // Base color factor
+        aiColor4D base_color(1.0f, 1.0f, 1.0f, 1.0f);
+        if (material->Get(AI_MATKEY_BASE_COLOR, base_color) == AI_SUCCESS)
+            pbr_mat->set_albedo(glm::vec3(base_color.r, base_color.g, base_color.b));
 
-    // Normal Maps
-    load_material_textures(material, material_name, aiTextureType_NORMALS, "normal", vertical_flip);
+        // Metallic factor
+        float metallic = 0.0f;
+        if (material->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS)
+            pbr_mat->set_metallic(metallic);
 
-    // Height Maps
-    load_material_textures(material, material_name, aiTextureType_HEIGHT, "height", vertical_flip);
+        // Roughness factor
+        float roughness = 0.5f;
+        if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
+            pbr_mat->set_roughness(roughness);
+
+        aiString alpha_mode;
+        if (material->Get("$mat.gltf.alphaMode", 0, 0, alpha_mode) == AI_SUCCESS)
+        {
+            if (std::string(alpha_mode.C_Str()) == "MASK")
+            {
+                pbr_mat->set_alpha_cutout(true);
+
+                // Leer umbral de alpha (alphaCutoff en glTF, default 0.5)
+                float cutoff = 0.5f;
+                material->Get("$mat.gltf.alphaCutoff", 0, 0, cutoff);
+                pbr_mat->set_alpha_threshold(cutoff);
+            }
+        }
+
+        // glTF uses aiTextureType_BASE_COLOR for albedo
+        load_material_textures(material, material_name, aiTextureType_BASE_COLOR, "albedo");
+        load_material_textures(material, material_name, aiTextureType_DIFFUSE_ROUGHNESS, "metallic_roughness");
+        load_material_textures(material, material_name, aiTextureType_NORMALS, "normal");
+    }
+    else
+    {
+        load_material_textures(material, material_name, aiTextureType_DIFFUSE, "diffuse", vertical_flip);
+        load_material_textures(material, material_name, aiTextureType_SPECULAR, "specular", vertical_flip);
+        load_material_textures(material, material_name, aiTextureType_NORMALS, "normal", vertical_flip);
+        load_material_textures(material, material_name, aiTextureType_HEIGHT, "height", vertical_flip);
+    }
     
     // Return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, material_mgr.get_material(material_name));

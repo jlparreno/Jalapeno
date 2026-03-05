@@ -3,7 +3,8 @@
 #include "Model.h"
 #include "Sphere.h"
 #include "Camera.h"
-#include "Light.h"
+#include "PointLight.h"
+#include "DirectionalLight.h"
 
 #include <string>
 #include <unordered_map>
@@ -57,16 +58,11 @@ public:
 	 */
 	Sphere* add_sphere(const std::string& name);
 
-	/**
-	 * @brief Adds a new light to the scene.
-	 *
-	 * The light is created with default parameters unless configured later.
-	 *
-	 * @param name Unique identifier for the new light.
-	 * 
-	 * @return Pointer to the created Light object.
-	 */
-	Light* add_light(const std::string& name);
+	
+	PointLight* add_point_light(const std::string& name,const glm::vec3& position, const glm::vec3& color = glm::vec3(1.0f), float intensity = 1.0f);
+
+
+	DirectionalLight* add_directional_light(const std::string& name, const glm::vec3& direction, const glm::vec3& color = glm::vec3(1.0f), float intensity = 1.0f);
 
 	/**
 	 * @brief Retrieves a vector containing raw pointers to all renderables in the scene.
@@ -87,9 +83,9 @@ public:
 	/**
 	 * @brief Retrieves all lights in the scene.
 	 *
-	 * @return std::vector of const Light* containing all lights.
+	 * @return std::vector of Light pointers
 	 */
-	std::vector<const Light*>	get_scene_lights() const;
+	const std::vector<std::unique_ptr<Light>>& get_scene_lights() const { return m_lights; }
 
 	/**
 	 * @brief Gets a renderable in the scene by name.
@@ -108,15 +104,6 @@ public:
 	 * @return Pointer to the Camera, or nullptr if not found.
 	 */
 	Camera*			get_camera(const std::string& name);
-
-	/**
-	 * @brief Gets a light in the scene by name.
-	 *
-	 * @param name Unique key of the light.
-	 * 
-	 * @return Pointer to the Light, or nullptr if not found.
-	 */
-	Light*			get_light(const std::string& name);
 
 	/**
 	 * @brief Returns the scene name.
@@ -143,5 +130,6 @@ private:
 	// All models, cameras and lights stored and owned by the scene.
 	std::unordered_map<std::string, std::unique_ptr<Renderable>>	m_renderables;
 	std::unordered_map<std::string, std::unique_ptr<Camera>>		m_cameras;
-	std::unordered_map<std::string, std::unique_ptr<Light>>			m_lights;
+
+	std::vector<std::unique_ptr<Light>> m_lights;
 };
