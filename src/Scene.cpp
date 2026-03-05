@@ -3,7 +3,7 @@
 Scene::Scene(const std::string& name) : m_name(name)
 {
 	// Add main camera (at the moment we only have this one)
-	auto camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
+	auto camera = std::make_unique<Camera>(glm::vec3(-3.0f, 3.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 0.0f, -10.0f);
 	m_cameras["main"] = std::move(camera);
 	m_active_camera = m_cameras["main"].get();
 }

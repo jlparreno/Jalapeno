@@ -41,7 +41,7 @@ int main()
     Sphere* sphere = scene->add_sphere("sphere1");
     if (sphere)
     {
-        sphere->set_material(phong_material);
+        sphere->set_material(lambert_material);
         sphere->set_position(glm::vec3(0.0f, 1.0f, 0.0f));
         sphere->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
     }
