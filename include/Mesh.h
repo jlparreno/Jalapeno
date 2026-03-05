@@ -21,6 +21,8 @@ class Mesh
 {
 public:
 
+    Mesh() = default;
+
     /**
      * @brief Constructs a Mesh with the provided vertex and index data.
      *
@@ -33,20 +35,23 @@ public:
     Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
 
     /**
-     * @brief Returns the material configured in the mesh
-     *
-     * @return Material pointer.
-     */
-    Material* get_material() const { return m_material; }
-
-    /**
      * @brief Renders the mesh using a given shader program.
-     * 
+     *
      * @param shader Pointer to the ShaderProgram used to draw the mesh.
      *
      * Binds the VAO, submits the draw call, and restores OpenGL state.
      */
     void draw(ShaderProgram* shader) const;
+
+
+    void set_material(Material* material) { m_material = material; }
+
+    /**
+     * @brief Returns the material configured in the mesh
+     *
+     * @return Material pointer.
+     */
+    Material* get_material() const { return m_material; }
 
 private:
 

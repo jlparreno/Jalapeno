@@ -2,14 +2,6 @@
 
 #include "Material.h"
 
-/**
- * @class PhongMaterial
- * 
- * @brief Material implementing the classic Phong lighting model.
- *
- * This class should be used whenever a traditional Phong shading
- * pipeline is required.
- */
 class PhongMaterial : public Material
 {
 public:
@@ -17,26 +9,24 @@ public:
 	/**
 	 * @brief Constructs a new Phong material.
 	 *
-	 * @param name   Identifier name of the material.
+	 * @param name Identifier name of the material.
 	 */
 	PhongMaterial(const std::string& name);
 
-    /**
-     * @brief Sets the shininess exponent controlling specular highlight size.
-     * @param value Higher values produce smaller, tighter specular highlights.
-     */
+    void set_ambient_color(const glm::vec3& color) { m_ambient_color = color; }
+    void set_diffuse_color(const glm::vec3& color) { m_diffuse_color = color; }
+    void set_specular_color(const glm::vec3& color) { m_specular_color = color; }
     void set_shininess(float value) { m_shininess = value; }
 
-    /**
-     * @brief Gets the shininess of the material.
-     * @return Shininess exponent used in the specular computation.
-     */
-    float get_shininess() const { return m_shininess; }
+    const glm::vec3& get_ambient_color()  const { return m_ambient_color; }
+    const glm::vec3& get_diffuse_color()  const { return m_diffuse_color; }
+    const glm::vec3& get_specular_color() const { return m_specular_color; }
+    float            get_shininess()      const { return m_shininess; }
 
 protected:
 
     /**
-     * @brief Applies the Phong-specific uniform values to the shader.
+     * @brief Applies the specific uniform values to the shader.
      *
      * The method assumes the shader program is already bound.
      */
@@ -44,6 +34,9 @@ protected:
 
 private:
 
-    // Specular exponent
-    float     m_shininess{ 32.0f };
+    glm::vec3 m_ambient_color { 0.1f, 0.1f, 0.1f };
+    glm::vec3 m_diffuse_color { 1.0f, 1.0f, 1.0f };
+    glm::vec3 m_specular_color{ 1.0f, 1.0f, 1.0f };
+
+    float     m_shininess{ 64.0f };
 };

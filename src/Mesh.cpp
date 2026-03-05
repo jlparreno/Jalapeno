@@ -18,10 +18,7 @@ void Mesh::draw(ShaderProgram* shader) const
         return;
     }
 
-    // Bind material textures
-    m_material->bind_textures(shader);
-
-    // Set specific material uniforms
+    // Set specific material uniforms (this will bind textures too)
     m_material->apply_uniforms(shader);
 
     // Draw mesh

@@ -1,5 +1,20 @@
 #include "TextureManager.h"
 
+void TextureManager::init()
+{
+    // Default white texture creation
+    unsigned char white[] = { 255, 255, 255, 255 };
+
+    GLuint id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, white);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    m_white_texture_id = id;
+}
+
 Texture* TextureManager::load_texture(const std::string& name, const std::string& path, bool vertical_flip, bool generate_mipmaps)
 {
     // If it exists, return the previously loaded texture

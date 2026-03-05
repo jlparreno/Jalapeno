@@ -9,6 +9,7 @@
 #include <assimp/postprocess.h>
 #include <spdlog/spdlog.h>
 
+#include "Renderable.h"
 #include "TextureManager.h"
 #include "MaterialManager.h"
 #include "ShaderProgram.h"
@@ -30,7 +31,7 @@
  * It handles material textures, supports optional gamma correction, and can
  * draw itself using a supplied shader program.
  */
-class Model
+class Model : public Renderable
 {
 public:
 
@@ -46,23 +47,13 @@ public:
     Model(const std::string& name, const std::string& path);
 
     /**
-     * @brief Loads a model from a file and stores its meshes
-     *
-     * @param path Filepath to the model
-     *
-     * Supports all file formats provided by ASSIMP. The meshes vector and
-     * internal directory path are populated.
-     */
-    void load_model(const std::string& path);
-
-    /**
      * @brief Draws the model using the provided shader program.
      *
      * @param shader Pointer to the ShaderProgram used to draw the mesh.
      * 
      * Iterates over all stored meshes and calls their draw function.
      */
-    void draw(ShaderProgram* shader) const;
+    void draw(ShaderProgram* shader) const override;
 
     /**
      * @brief Returns the model name.
@@ -71,36 +62,19 @@ public:
      */
     std::string get_name() const { return m_name; };
 
-    /**
-     * @brief Sets a new position for the model.
-     *
-     * @param pos New position of the model.
-     */
-    void set_position(const glm::vec3& pos) { m_position = pos; }
-
-    /**
-     * @brief Sets new rotation values for the model.
-     *
-     * @param rot New rotation values, euler angles, for each axis.
-     */
-    void set_rotation(const glm::vec3& rot) { m_rotation = rot; }
-
-    /**
-     * @brief Sets a new scale value for the model.
-     *
-     * @param scale New scale values, per axis
-     */
-    void set_scale(const glm::vec3& scale) { m_scale = scale; }
-
-
-    /**
-     * @brief Gets the model matrix of the model using the transforms configured.
-     *
-     * @return Transform matrix for this model.
-     */
-    glm::mat4 get_model_matrix() const;
+    const std::vector<Mesh>& get_meshes() const override { return m_meshes; }
 
 private:
+
+    /**
+     * @brief Loads a model from a file and stores its meshes
+     *
+     * @param path Filepath to the model
+     *
+     * Supports all file formats provided by ASSIMP. The meshes vector and
+     * internal directory path are populated.
+     */
+    void load_model(const std::string& path);
 
     /**
      * @brief Recursively processes an ASSIMP node and its children in the scene graph
@@ -147,10 +121,5 @@ private:
 
     // All the meshes of the model
     std::vector<Mesh>     m_meshes;
-
-    // Transforms for this model
-    glm::vec3             m_position;
-    glm::vec3             m_rotation;
-    glm::vec3             m_scale;
 };
 

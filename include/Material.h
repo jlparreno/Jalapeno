@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "ShaderProgram.h"
+#include "ShaderManager.h"
 #include "TextureManager.h"
 
 #include <string>
@@ -72,6 +72,8 @@ public:
      */
     MaterialType get_type() const { return m_type; }
 
+    ShaderProgram* get_shader() const { return m_shader; }
+
     /**
      * @brief Returns all textures stored in this material.
      *
@@ -90,14 +92,18 @@ public:
      */
     virtual void apply_uniforms(ShaderProgram* shader) const = 0;
 
+protected:
+
+    // Mapping of shader uniform names to bound textures
+    std::unordered_map<std::string, Texture*> m_textures;
+
+    ShaderProgram* m_shader;
+
 private:
 
     // Identifier name of the material
     std::string     m_name;
 
-    // Material type (PBR, Phong...)
+    // Material type (Lambert, Phong, PBR...)
     MaterialType    m_type;
-
-    // Mapping of shader uniform names to bound textures
-    std::unordered_map<std::string, Texture*> m_textures;
 };

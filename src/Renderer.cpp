@@ -19,8 +19,8 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	auto& shader_mgr = ShaderManager::instance();
 	std::string shader_dir = static_cast<std::string>(SHADERS_DIR);
 
-	shader_mgr.load_program("texture", { shader_dir + "simple_texture.vert", shader_dir + "simple_texture.frag" });
-	shader_mgr.load_program("lighting_phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
+	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
+	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
 
 	SPDLOG_INFO("Creating main Framebuffer");
 
@@ -131,7 +131,7 @@ void Renderer::render_scene()
 	// Here the renderer will call the different passes. It will control de framebuffer bindings.
 	// The responsibility of draw each pass is for each object.
 	// Draw call will include which pass are we drawing, and each object decides what to do
-	
+
 
 	// Forward rendering: Main Pass
 	Framebuffer* fbo = FramebufferManager::instance().get_framebuffer("main");
@@ -142,18 +142,11 @@ void Renderer::render_scene()
 		SPDLOG_ERROR("Invalid FBO for Main Pass");
 		return;
 	}
-
-	// Set shader for this pass
-	ShaderProgram* shader = ShaderManager::instance().get_program("lighting_phong");
-
-	if (!shader)
-	{
-		SPDLOG_ERROR("Error getting the shader program for rendering pass");
-		return;
-	}
 	
 	fbo->bind();
-	render_all_models(shader);
+
+	draw_all_renderables();
+
 	fbo->unbind();
 
 	//TODO: More passes??
@@ -172,7 +165,7 @@ void Renderer::render_scene()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void Renderer::render_all_models(ShaderProgram* shader)
+void Renderer::draw_all_renderables()
 {
 	// Clear screen with out default clear color
 	glClearColor(0.16f, 0.18f, 0.20f, 1.0f);
@@ -192,35 +185,41 @@ void Renderer::render_all_models(ShaderProgram* shader)
 	glm::mat4 view_mat = camera->get_view_matrix();
 	glm::mat4 projection_mat = glm::perspective(glm::radians(camera->get_fov()), aspect, 0.1f, 100.0f);
 
-	shader->bind();
-
-	// Scene data
-	shader->set_uniform("view", view_mat);
-	shader->set_uniform("projection", projection_mat);
-	shader->set_uniform("view_pos", camera->get_position());
-	
-	// Lights
-	// TODO: This loop is to add the possibility to add more lights in the future
-	// Now we only will see the last light added to the scene
-	for (const auto& light : m_scene->get_scene_lights())
-	{
-		shader->set_uniform("light.position", light->get_position());
-		shader->set_uniform("light.ambient", light->get_ambient());
-		shader->set_uniform("light.diffuse", light->get_diffuse());
-		shader->set_uniform("light.specular", light->get_specular());
-	}
-
 	// Iterate all scene objects calling each draw function
-	for (const Model* model : m_scene->get_scene_models())
+	for (const Renderable* renderable : m_scene->get_scene_renderables())
 	{
-		// Model data
-		shader->set_uniform("model", model->get_model_matrix());
+		glm::mat4 model = renderable->get_model_matrix();
 
-		// Draw model geometry
-		model->draw(shader);
+		for (auto& mesh : renderable->get_meshes())
+		{
+			Material* material = mesh.get_material();
+			ShaderProgram* shader = material->get_shader();
+
+			shader->bind();
+
+			shader->set_uniform("model", model);
+			shader->set_uniform("view", view_mat);
+			shader->set_uniform("projection", projection_mat);
+			shader->set_uniform("view_pos", camera->get_position());
+
+			// Lights
+			// TODO: This loop is to add the possibility to add more lights in the future
+			// Now we only will see the last light added to the scene
+			for (const auto& light : m_scene->get_scene_lights())
+			{
+				shader->set_uniform("light.position", light->get_position());
+				shader->set_uniform("light.ambient", light->get_ambient());
+				shader->set_uniform("light.diffuse", light->get_diffuse());
+				shader->set_uniform("light.specular", light->get_specular());
+			}
+
+			material->apply_uniforms(shader);
+
+			mesh.draw(shader);
+
+			shader->unbind();
+		}
 	}
-
-	shader->unbind();
 }
 
 void Renderer::resize(int width, int height)
@@ -256,8 +255,8 @@ void Renderer::display_frame_times()
 void Renderer::terminate()
 {
 	auto& shader_mgr = ShaderManager::instance();
-	glDeleteProgram(shader_mgr.get_program("texture")->get_id());
-	glDeleteProgram(shader_mgr.get_program("lighting_phong")->get_id());
+	glDeleteProgram(shader_mgr.get_program("lambert")->get_id());
+	glDeleteProgram(shader_mgr.get_program("phong")->get_id());
 
 	// TODO: Check if loaded models buffers are correctly destroyed
 	//glDeleteVertexArrays(1, &cube_VAO);

@@ -2,10 +2,7 @@
 
 Model::Model(const std::string& name, const std::string& path) :
     m_name(name), 
-    m_directory(""),
-    m_position(glm::vec3(0.0f,0.0f,0.0f)),
-    m_scale(glm::vec3(1.0f, 1.0f, 1.0f)),
-    m_rotation(glm::vec3(0.0f, 0.0f, 0.0f))
+    m_directory("")
 {
     load_model(path);
 }
@@ -39,8 +36,6 @@ void Model::load_model(const std::string& path)
 
     // Process ASSIMP's root node recursively
     process_node(scene->mRootNode, scene);
-
-    SPDLOG_INFO("Loaded new model: {}", m_name);
 }
 
 void Model::process_node(aiNode* node, const aiScene* scene)
@@ -198,15 +193,4 @@ void Model::load_material_textures(aiMaterial* mat, const std::string& material_
         Material* material = material_mgr.get_material(material_name);
         material->add_texture(texture_name, texture_path.string(), type_name, vertical_flip);
     }
-}
-
-glm::mat4 Model::get_model_matrix() const
-{
-    glm::mat4 model(1.0f);
-
-    model = glm::translate(model, m_position);
-    model = glm::scale(model, m_scale);
-    //model = glm::rotate(model,);
-
-    return model;
 }

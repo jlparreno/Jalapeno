@@ -28,6 +28,7 @@ enum class LightType
 
 enum class MaterialType
 {
+    Lambert,
     Phong,
     PBR
 };

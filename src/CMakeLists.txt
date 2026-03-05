@@ -1,23 +1,6 @@
 # Create an exceutable with all our sources
 file(GLOB_RECURSE SRC_FILES
-    "main.cpp"
-    "Camera.cpp"
-    "Texture.cpp"
-    "TextureManager.cpp"
-    "ShaderProgram.cpp"
-    "ShaderManager.cpp"
-    "Mesh.cpp"
-    "Model.cpp"
-    "Framebuffer.cpp"
-    "FramebufferManager.cpp"
-    "Renderer.cpp"
-    "Scene.cpp"
-    "Light.cpp"
-    "UIManager.cpp"
-    "InputManager.cpp"
-    "Material.cpp"
-    "MaterialManager.cpp"
-    "PhongMaterial.cpp"
+    "*.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})

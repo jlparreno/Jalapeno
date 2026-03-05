@@ -19,11 +19,30 @@ void Material::add_texture(const std::string& name, const std::string& path, con
 
 void Material::bind_textures(ShaderProgram* shader) const
 {
-    int unit = 0;
+    auto& tex_mgr = TextureManager::instance();
+    GLuint white = tex_mgr.get_white_texture();
+
+    // Bindea diffuse — textura real o blanca como fallback
+    glActiveTexture(GL_TEXTURE0);
+    if (m_textures.count("diffuse_tex"))
+        glBindTexture(GL_TEXTURE_2D, m_textures.at("diffuse_tex")->get_id());
+    else
+        glBindTexture(GL_TEXTURE_2D, white);
+    shader->set_uniform("diffuse_tex", 0);
+
+    // Bindea specular — textura real o blanca como fallback
+    glActiveTexture(GL_TEXTURE1);
+    if (m_textures.count("specular_tex"))
+        glBindTexture(GL_TEXTURE_2D, m_textures.at("specular_tex")->get_id());
+    else
+        glBindTexture(GL_TEXTURE_2D, white);
+    shader->set_uniform("specular_tex", 1);
+
+    /*int unit = 0;
     for (const auto& [uniform_name, tex] : m_textures)
     {
         tex->bind(unit);
         shader->set_uniform(uniform_name, unit);
         unit++;
-    }
+    }*/
 }

@@ -11,9 +11,25 @@ Scene::Scene(const std::string& name) : m_name(name)
 Model* Scene::add_model(const std::string& name, const std::string& path)
 {
 	auto model = std::make_unique<Model>(name, path);
-	m_models[model->get_name()] = std::move(model);
 
-	return m_models[name].get();
+	Model* ptr = model.get();
+	m_renderables[model->get_name()] = std::move(model);
+
+	SPDLOG_INFO("Added new model to the scene: {}", name);
+
+	return ptr;
+}
+
+Sphere* Scene::add_sphere(const std::string& name)
+{
+	auto sphere = std::make_unique<Sphere>();
+
+	Sphere* ptr = sphere.get();
+	m_renderables[name] = std::move(sphere);
+
+	SPDLOG_INFO("Added new sphere to the scene: {}", name);
+
+	return ptr;
 }
 
 Light* Scene::add_light(const std::string& name)
@@ -24,14 +40,14 @@ Light* Scene::add_light(const std::string& name)
 	return m_lights[name].get();
 }
 
-std::vector<const Model*> Scene::get_scene_models() const
+std::vector<const Renderable*> Scene::get_scene_renderables() const
 {
-	std::vector<const Model*> result;
-	result.reserve(m_models.size());
+	std::vector<const Renderable*> result;
+	result.reserve(m_renderables.size());
 
-	for (const auto& [name, model] : m_models)
+	for (const auto& [name, renderable] : m_renderables)
 	{
-		result.push_back(model.get());
+		result.push_back(renderable.get());
 	}
 
 	return result;
@@ -63,15 +79,15 @@ std::vector<const Light*> Scene::get_scene_lights() const
 	return result;
 }
 
-Model* Scene::get_model(const std::string& name)
+Renderable* Scene::get_renderable(const std::string& name)
 {
-	if (m_models.find(name) == m_models.end())
+	if (m_renderables.find(name) == m_renderables.end())
 	{
 		SPDLOG_ERROR("Model {} does not exist");
 		return nullptr;
 	}
 
-	return m_models[name].get();
+	return m_renderables[name].get();
 }
 
 Camera* Scene::get_camera(const std::string& name)

@@ -139,13 +139,12 @@ private:
 
     /**
      * @brief Renders all models belonging to the active scene.
-     *
-     * @param shader Pointer to the shader to use in the draw calls
      * 
      * Called internally by render_scene().
-     * Iterates through the model list and issues draw calls with the specified shader
+     * Iterates through the renderable list and issues draw calls
+     * Each renderable should have a valid material to draw
      */
-    void render_all_models(ShaderProgram* shader);
+    void draw_all_renderables();
 
     // TODO: Function to render only an specific model by name
     // void render_model(Model* model);

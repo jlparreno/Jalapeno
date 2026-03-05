@@ -110,14 +110,27 @@ public:
      */
     const std::unordered_map<std::string, std::unique_ptr<Texture>>& get_all_textures() const { return m_textures; }
 
+    GLuint get_white_texture() const { return m_white_texture_id; }
+
 private:
 
-    // Private constructor and destructor to enforce singleton pattern
-    TextureManager() = default;
+    // Private constructor to enforce singleton pattern
+    TextureManager::TextureManager()
+    {
+        init(); //Automatically init on first call
+    }
+
+    // Private destructor to enforce singleton pattern
     ~TextureManager() = default;
+
+
+    void init();
 
     // Map storing textures by their unique name
     // Uses unique_ptr to ensure proper memory management
     std::unordered_map<std::string, std::unique_ptr<Texture>> m_textures;
+
+    // Default 1x1 white texture
+    GLuint m_white_texture_id;
 };
 

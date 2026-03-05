@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Model.h"
+#include "Sphere.h"
 #include "Camera.h"
 #include "Light.h"
 
@@ -32,7 +33,7 @@ public:
 	Scene(const std::string& name);
 
 	/**
-	 * @brief Adds a model to the scene by loading it from disk.
+	 * @brief Adds an assimp model to the scene by loading it from disk.
 	 *
 	 * The method creates a new Model instance, stores it internally,
 	 * and returns a raw pointer for direct manipulation.
@@ -40,9 +41,21 @@ public:
 	 * @param name Name used as a unique key inside the scene.
 	 * @param path Filesystem path to the model to load.
 	 * 
-	 * @return Pointer to the created Model object.
+	 * @return Pointer to the created Renderable object
 	 */
 	Model* add_model(const std::string& name, const std::string& path);
+
+	/**
+	 * @brief Adds a generic sphere to the scene by loading it from disk.
+	 *
+	 * The method creates a new Sphere instance, stores it internally,
+	 * and returns a raw pointer for direct manipulation.
+	 *
+	 * @param name Name used as a unique key inside the scene.
+	 *
+	 * @return Pointer to the created Renderable object
+	 */
+	Sphere* add_sphere(const std::string& name);
 
 	/**
 	 * @brief Adds a new light to the scene.
@@ -56,13 +69,13 @@ public:
 	Light* add_light(const std::string& name);
 
 	/**
-	 * @brief Retrieves a vector containing raw pointers to all models in the scene.
+	 * @brief Retrieves a vector containing raw pointers to all renderables in the scene.
 	 *
 	 * Useful for render passes or editor views that need to iterate over objects.
 	 *
-	 * @return std::vector of const Model* containing all models in the scene.
+	 * @return std::vector of const IRenderable* containing all renderables in the scene.
 	 */
-	std::vector<const Model*>	get_scene_models() const;
+	std::vector<const Renderable*>	get_scene_renderables() const;
 
 	/**
 	 * @brief Retrieves all cameras stored in the scene.
@@ -79,13 +92,13 @@ public:
 	std::vector<const Light*>	get_scene_lights() const;
 
 	/**
-	 * @brief Gets a model in the scene by name.
+	 * @brief Gets a renderable in the scene by name.
 	 *
-	 * @param name Unique key of the model.
+	 * @param name Unique key of the renderable
 	 * 
-	 * @return Pointer to the Model, or nullptr if not found.
+	 * @return Pointer to the Renderable, or nullptr if not found.
 	 */
-	Model*			get_model(const std::string& name);
+	Renderable*	get_renderable(const std::string& name);
 
 	/**
 	 * @brief Gets a camera in the scene by name.
@@ -128,7 +141,7 @@ private:
 	Camera* m_active_camera;
 
 	// All models, cameras and lights stored and owned by the scene.
-	std::unordered_map<std::string, std::unique_ptr<Model>>		m_models;
-	std::unordered_map<std::string, std::unique_ptr<Camera>>	m_cameras;
-	std::unordered_map<std::string, std::unique_ptr<Light>>		m_lights;
+	std::unordered_map<std::string, std::unique_ptr<Renderable>>	m_renderables;
+	std::unordered_map<std::string, std::unique_ptr<Camera>>		m_cameras;
+	std::unordered_map<std::string, std::unique_ptr<Light>>			m_lights;
 };
