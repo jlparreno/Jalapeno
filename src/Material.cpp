@@ -2,7 +2,8 @@
 
 Material::Material(const std::string& name, MaterialType type) : 
     m_name(name), 
-    m_type(type)
+    m_type(type),
+    m_shader(nullptr)
 {
 }
 
@@ -19,30 +20,27 @@ void Material::add_texture(const std::string& name, const std::string& path, con
 
 void Material::bind_textures(ShaderProgram* shader) const
 {
-    auto& tex_mgr = TextureManager::instance();
-    GLuint white = tex_mgr.get_white_texture();
-
-    // Bindea diffuse — textura real o blanca como fallback
-    glActiveTexture(GL_TEXTURE0);
-    if (m_textures.count("diffuse_tex"))
-        glBindTexture(GL_TEXTURE_2D, m_textures.at("diffuse_tex")->get_id());
-    else
-        glBindTexture(GL_TEXTURE_2D, white);
-    shader->set_uniform("diffuse_tex", 0);
-
-    // Bindea specular — textura real o blanca como fallback
-    glActiveTexture(GL_TEXTURE1);
-    if (m_textures.count("specular_tex"))
-        glBindTexture(GL_TEXTURE_2D, m_textures.at("specular_tex")->get_id());
-    else
-        glBindTexture(GL_TEXTURE_2D, white);
-    shader->set_uniform("specular_tex", 1);
-
-    /*int unit = 0;
+    // Base case, loop the textures and bind sequentially
+    int unit = 0;
     for (const auto& [uniform_name, tex] : m_textures)
     {
         tex->bind(unit);
         shader->set_uniform(uniform_name, unit);
         unit++;
-    }*/
+    }
+}
+
+void Material::bind_texture_or_white(const std::string& name, int unit, ShaderProgram* shader) const
+{
+    // Find the texture in the material
+    auto it = m_textures.find(name);
+
+    // Bind the texture found or the default 1x1 white one if not
+    if (it != m_textures.end())
+        it->second->bind(unit);
+    else
+        TextureManager::instance().get_white_texture()->bind(unit);
+
+    // Set corresponding sampler uniform
+    shader->set_uniform(name, unit);
 }

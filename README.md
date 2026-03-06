@@ -18,6 +18,8 @@ It’s designed for experiments and real-time graphics research.
 ## Screenshots
 
 ![Screenshot](screenshots/screenshot.png)
+![Screenshot](screenshots/screenshot2.png)
+![Screenshot](screenshots/screenshot3.png)
 
 ## Controls
 | Key        | Action                   |

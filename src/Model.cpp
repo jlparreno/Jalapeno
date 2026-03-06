@@ -66,7 +66,6 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     // Data to fill
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
-    //std::vector<TextureInfo>  textures;
 
     // Iterate mesh vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -161,6 +160,7 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
     if (m_format == ".obj")
         vertical_flip = true;
 
+    // Load specific attributes and textures for the material, depending on type
     if (material_type == MaterialType::PBR)
     {
         PBRMaterial* pbr_mat = static_cast<PBRMaterial*>(material_mgr.get_material(material_name));
@@ -179,20 +179,6 @@ Mesh Model::process_mesh(aiMesh* mesh, const aiScene* scene)
         float roughness = 0.5f;
         if (material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
             pbr_mat->set_roughness(roughness);
-
-        aiString alpha_mode;
-        if (material->Get("$mat.gltf.alphaMode", 0, 0, alpha_mode) == AI_SUCCESS)
-        {
-            if (std::string(alpha_mode.C_Str()) == "MASK")
-            {
-                pbr_mat->set_alpha_cutout(true);
-
-                // Leer umbral de alpha (alphaCutoff en glTF, default 0.5)
-                float cutoff = 0.5f;
-                material->Get("$mat.gltf.alphaCutoff", 0, 0, cutoff);
-                pbr_mat->set_alpha_threshold(cutoff);
-            }
-        }
 
         // glTF uses aiTextureType_BASE_COLOR for albedo
         load_material_textures(material, material_name, aiTextureType_BASE_COLOR, "albedo");

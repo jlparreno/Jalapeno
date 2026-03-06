@@ -110,7 +110,7 @@ public:
      */
     const std::unordered_map<std::string, std::unique_ptr<Texture>>& get_all_textures() const { return m_textures; }
 
-    GLuint get_white_texture() const { return m_white_texture_id; }
+    Texture* get_white_texture() const { return m_white_texture.get(); }
 
 private:
 
@@ -131,6 +131,6 @@ private:
     std::unordered_map<std::string, std::unique_ptr<Texture>> m_textures;
 
     // Default 1x1 white texture
-    GLuint m_white_texture_id;
+    std::unique_ptr<Texture> m_white_texture;
 };
 

@@ -43,13 +43,20 @@ public:
      */
     void draw(ShaderProgram* shader) const;
 
-
+    /**
+     * @brief Sets the material used to render this mesh
+     *
+     * The mesh does not take ownership of the material. The caller is responsible
+     * for ensuring the material remains valid for the lifetime of this mesh.
+     *
+     * @param material Pointer to the material to assign to this mesh
+     */
     void set_material(Material* material) { m_material = material; }
 
     /**
      * @brief Returns the material configured in the mesh
      *
-     * @return Material pointer.
+     * @return Material pointer
      */
     Material* get_material() const { return m_material; }
 

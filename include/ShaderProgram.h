@@ -131,10 +131,12 @@ private:
     /**
      * @brief Loads the contents of a shader source file into a string
      *
+     * @param type Shader type, to select corresponding common includes
      * @param path Path to the shader file
+     * 
      * @return std::string containing the GLSL source code
      */
-    std::string load_file(const std::string& path);
+    std::string load_file(ShaderType type, const std::string& path);
 
 
     // OpenGL handle of the linked shader program

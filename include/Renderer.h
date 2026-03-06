@@ -139,17 +139,20 @@ private:
      * @brief Renders all models belonging to the active scene.
      * 
      * Called internally by render_scene().
-     * Iterates through the renderable list and issues draw calls
-     * Each renderable should have a valid material to draw
+     * Iterates through the renderable list and issues draw calls.
+     * Each renderable should have a valid material to draw.
      */
     void draw_all_renderables();
 
-    // TODO: Function to render only an specific model by name
-    // void render_model(Model* model);
-
-    // TODO: Function to bind an specific framebuffer by name
-    // void bind_framebuffer(const std::string& name);
-
+    /**
+     * @brief Uploads all active scene lights to the given shader program
+     *
+     * Iterates the scene's light list, classifies each light by type, and uploads
+     * their properties as uniform arrays to the shader. The shader program is assumed 
+     * to be already bound before this call.
+     *
+     * @param shader Pointer to the ShaderProgram that will receive the light uniforms.
+     */
     void upload_lights(ShaderProgram* shader);
 
     /**
@@ -166,6 +169,12 @@ private:
      */
     void display_frame_times();
 
+
+    // TODO: Function to render only an specific model by name
+    // void render_model(Model* model);
+
+    // TODO: Function to bind an specific framebuffer by name
+    // void bind_framebuffer(const std::string& name);
 
 
     // Name of the renderer

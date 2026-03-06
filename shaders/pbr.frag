@@ -20,12 +20,12 @@ struct DirectionalLight
 };
 
 #define MAX_POINT_LIGHTS 8
-uniform PointLight u_point_lights[MAX_POINT_LIGHTS];
-uniform int        u_num_point_lights;
+uniform PointLight point_lights[MAX_POINT_LIGHTS];
+uniform int        num_point_lights;
 
 #define MAX_DIRECTIONAL_LIGHTS 4
-uniform DirectionalLight u_directional_lights[MAX_DIRECTIONAL_LIGHTS];
-uniform int              u_num_directional_lights;
+uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
+uniform int              num_directional_lights;
 
 struct Material 
 {
@@ -33,8 +33,6 @@ struct Material
     vec3    albedo_color;
     float   metallic;
     float   roughness;
-    bool    alpha_cutout;
-    float   alpha_threshold;
 };
 uniform Material material;
 
@@ -88,6 +86,7 @@ vec3 fresnel_schlick(float cos_theta, vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cos_theta, 0.0, 1.0), 5.0);
 }
 
+// Tone - mapping
 vec3 aces_tone_map(vec3 x)
 {
     float a = 2.51f;
@@ -100,7 +99,7 @@ vec3 aces_tone_map(vec3 x)
 
 void main()
 {
-    // Muestrar texturas
+    // Sample textures
     vec4 albedo_sample = texture(albedo_tex, TexCoords);
     vec3 albedo        = albedo_sample.rgb * material.albedo_color;
     float alpha        = albedo_sample.a;
@@ -109,22 +108,22 @@ void main()
     float metallic  = mr_sample.x * material.metallic;
     float roughness = mr_sample.y * material.roughness;
 
-    // Normal
+    // Normal, from data or normal texture, depending on uniform flag
     vec3 N;
     if (material.use_normal_map)
     {
-        // Samplear el normal map y transformar de [0,1] a [-1,1]
+        // Sample normal map and transform from [0,1] to [-1,1]
         vec3 normal_sample = texture(normal_tex, TexCoords).rgb;
         normal_sample = normal_sample * 2.0 - 1.0;
-        normal_sample.y = -normal_sample.y;  // invertir canal Y (DirectX → OpenGL)
+        normal_sample.y = -normal_sample.y;  // Invert Y (DirectX → OpenGL)
 
-        // Recalcular TBN en el fragment shader con derivadas parciales
+        // Recalculate TBN here, to avoid original incorrect data
         vec3 Q1  = dFdx(FragPos);
         vec3 Q2  = dFdy(FragPos);
         vec2 st1 = dFdx(TexCoords);
         vec2 st2 = dFdy(TexCoords);
 
-        vec3 N_  = normalize(Normal);  // normal del vértice como base
+        vec3 N_  = normalize(Normal);  // Vertex normal as base
         vec3 T   = normalize(Q1 * st2.t - Q2 * st1.t);
         T        = normalize(T - dot(T, N_) * N_); // Gram-Schmidt
         vec3 B   = normalize(cross(N_, T));
@@ -139,22 +138,24 @@ void main()
 
     vec3 V = normalize(view_pos - FragPos);
 
-    // F0: reflectancia en incidencia 0 grados
-    // Para no metálicos es siempre ~0.04, para metálicos es el albedo
+    // F0: Reflectance in 0 degrees
+    // No metallics always ~0.04, for metallics always the albedo
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     vec3 Lo = vec3(0.0);
 
     // Point Lights
-    for (int i = 0; i < u_num_point_lights; i++)
+    for (int i = 0; i < num_point_lights; i++)
     {
-        vec3  L         = normalize(u_point_lights[i].position - FragPos);
+        vec3  L         = normalize(point_lights[i].position - FragPos);
         vec3  H         = normalize(V + L);
-        float dist      = length(u_point_lights[i].position - FragPos);
-        float atten     = 1.0 / (u_point_lights[i].constant
-                        + u_point_lights[i].linear    * dist
-                        + u_point_lights[i].quadratic * dist * dist);
-        vec3  radiance  = u_point_lights[i].color * u_point_lights[i].intensity * atten;
+        float dist      = length(point_lights[i].position - FragPos);
+        
+        float atten     = 1.0 / (point_lights[i].constant + 
+                                 point_lights[i].linear * dist + 
+                                 point_lights[i].quadratic * dist * dist);
+
+        vec3  radiance  = point_lights[i].color * point_lights[i].intensity * atten;
 
         // Cook-Torrance BRDF
         float NDF = distribution_ggx(N, H, roughness);
@@ -165,8 +166,8 @@ void main()
         float denom       = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
         vec3  specular    = num / denom;
 
-        // kS = Fresnel (energía especular)
-        // kD = resto (energía difusa), metales no tienen difuso
+        // kS = Fresnel (Specular energy)
+        // kD = resto (Diffuse energy), metallics doesn't have diffuse
         vec3  kS = F;
         vec3  kD = (vec3(1.0) - kS) * (1.0 - metallic);
 
@@ -175,11 +176,11 @@ void main()
     }
 
     // Directional Lights
-    for (int i = 0; i < u_num_directional_lights; i++)
+    for (int i = 0; i < num_directional_lights; i++)
     {
-        vec3  L        = normalize(-u_directional_lights[i].direction);
+        vec3  L        = normalize(-directional_lights[i].direction);
         vec3  H        = normalize(V + L);
-        vec3  radiance = u_directional_lights[i].color * u_directional_lights[i].intensity;
+        vec3  radiance = directional_lights[i].color * directional_lights[i].intensity;
 
         float NDF = distribution_ggx(N, H, roughness);
         float G   = geometry_smith(N, V, L, roughness);
@@ -195,13 +196,12 @@ void main()
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
-    // Ambient mínimo para que las zonas sin luz no sean negro puro
+    // Minimal ambient for dark zones
     vec3 ambient = vec3(0.08) * albedo;
     vec3 color   = ambient + Lo;
 
     // Tone mapping + gamma correction
-    // color = color / (color + vec3(1.0));  // Reinhard
-    color = aces_tone_map(color);            // ACES
+    color = aces_tone_map(color);           // ACES
     color = pow(color, vec3(1.0 / 2.2));    // gamma correction
 
     FragColor = vec4(color, alpha);

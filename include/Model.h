@@ -63,6 +63,14 @@ public:
      */
     std::string get_name() const { return m_name; };
 
+    /**
+     * @brief Returns all meshes of this model
+     *
+     * Each mesh holds its own geometry and material, as extracted from
+     * the imported scene hierarchy.
+     *
+     * @return Const reference to the vector of meshes owned by this model
+     */
     const std::vector<Mesh>& get_meshes() const override { return m_meshes; }
 
 private:
@@ -99,15 +107,22 @@ private:
     Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
 
     /**
-     * @brief Gets all material textures of a specific type, loads them and creates the material
+     * @brief Loads and registers all textures of a given type from an Assimp material
      *
-     * @param mat Pointer to the aiMaterial containing textures.
-     * @param type Type of texture to load (e.g., diffuse, specular).
-     * @param type_name Name identifier for the texture type.
-     * @param vertical_flip Wether the textures should be flipper vertically or not.
+     * Iterates all textures of the specified Assimp texture type in the given material,
+     * resolves their file paths relative to the model's directory, and registers them
+     * with the MaterialManager under the provided material name.
+     *
+     * If a texture has already been loaded by the TextureManager it will be reused
+     * from cache, avoiding redundant GPU uploads.
+     *
+     * @param mat           Pointer to the Assimp material to extract textures from
+     * @param material_name Name of the material in the MaterialManager to assign the textures to
+     * @param type          Assimp texture type to extract (e.g. aiTextureType_DIFFUSE, aiTextureType_NORMALS)
+     * @param type_name     Semantic name used to identify the texture slot internally
+     * @param vertical_flip Whether the texture should be flipped vertically on load
      */
     void load_material_textures(aiMaterial* mat, const std::string& material_name, aiTextureType type, const std::string& type_name, bool vertical_flip = false);
-
 
     // MODEL DATA
 

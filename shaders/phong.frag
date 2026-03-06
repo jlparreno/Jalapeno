@@ -18,12 +18,12 @@ struct DirectionalLight
 };
 
 #define MAX_POINT_LIGHTS 8
-uniform PointLight u_point_lights[MAX_POINT_LIGHTS];
-uniform int        u_num_point_lights;
+uniform PointLight point_lights[MAX_POINT_LIGHTS];
+uniform int        num_point_lights;
 
 #define MAX_DIRECTIONAL_LIGHTS 4
-uniform DirectionalLight u_directional_lights[MAX_DIRECTIONAL_LIGHTS];
-uniform int              u_num_directional_lights;
+uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
+uniform int              num_directional_lights;
 
 struct Material 
 {
@@ -69,6 +69,7 @@ float compute_attenuation(PointLight light, float dist)
                 + light.quadratic * dist * dist);
 }
 
+// Calculates contribution of a single point light
 vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 diffuse_color, vec3 specular_color)
 {
     vec3  light_dir   = normalize(light.position - FragPos);
@@ -90,6 +91,7 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 view_dir, vec3 diff
     return (ambient + diffuse + specular) * attenuation;
 }
 
+// Calculates contribution of a single directional light
 vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 view_dir, vec3 diffuse_color, vec3 specular_color)
 {
     vec3 light_dir = normalize(-light.direction);
@@ -113,35 +115,30 @@ void main()
 {
     vec4 diff_sample = texture(diffuse_tex, TexCoords);
 
-    // Discard transparent fragments
-    if (diff_sample.a < 0.5)
-        discard;
-
     // Diffuse and specular colors, textured or not
     vec3 diffuse_color = get_diffuse_color();
     vec3 specular_color = get_specular_color();
 
-    // Normal, no normal mapping for now
+    // Normal, direct from geometry data, no normal mapping for now
     vec3 normal = normalize(Normal);
     //    if(material.use_normal_texture)
     //        norm = texture(normal_tex, TexCoords).xyz;
 
     vec3 view_dir = normalize(view_pos - FragPos);
 
-
     vec3 result = vec3(0.0);
 
-    for (int i = 0; i < u_num_point_lights; i++)
+    // Accumulate each point light contribution
+    for (int i = 0; i < num_point_lights; i++)
     {
-        result += compute_point_light(u_point_lights[i], normal, view_dir, diffuse_color, specular_color);
+        result += compute_point_light(point_lights[i], normal, view_dir, diffuse_color, specular_color);
     }
 
-    for (int i = 0; i < u_num_directional_lights; i++)
+    // Accumulate each directional light contribution
+    for (int i = 0; i < num_directional_lights; i++)
     {
-        result += compute_directional_light(u_directional_lights[i], normal, view_dir, diffuse_color, specular_color);
+        result += compute_directional_light(directional_lights[i], normal, view_dir, diffuse_color, specular_color);
     }
 
     FragColor = vec4(result, 1.0);
 }
-
-

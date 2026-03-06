@@ -1,15 +1,49 @@
 #pragma once
 
+#include <glm/glm.hpp>
 #include "Light.h"
 
+/**
+ * @class PointLight
+ *
+ * @brief Represents a point light source that emits light in all directions from a position.
+ *
+ * A point light emits light equally in all directions from a fixed world-space position, 
+ * and its intensity attenuates with distance using a configurable quadratic attenuation model.
+ */
 class PointLight : public Light
 {
 public:
 
-    PointLight(const std::string& name, const glm::vec3& position = glm::vec3(0.0f), const glm::vec3& color = glm::vec3(1.0f), float intensity = 1.0f);
+    /**
+     * @brief Constructs a PointLight with the given properties
+     *
+     * @param name      Identifier name used to reference this light
+     * @param position  World-space position of the light
+     * @param color     RGB color of the emitted light
+     * @param intensity Intensity multiplier applied to the light output
+     */
+    PointLight(const std::string& name,
+        const glm::vec3& position = glm::vec3(0.0f),
+        const glm::vec3& color = glm::vec3(1.0f),
+        float intensity = 1.0f);
 
+    /**
+     * @brief Sets the world-space position of the light
+     *
+     * @param pos New position vector
+     */
     void set_position(const glm::vec3& pos) { m_position = pos; }
 
+    /**
+     * @brief Sets the attenuation coefficients for distance-based light falloff
+     *
+     * Typical values: constant=1.0, linear=0.09, quadratic=0.032
+     *
+     * @param constant  Constant attenuation term. Should be >= 1.0
+     * @param linear    Linear attenuation term controlling gradual falloff
+     * @param quadratic Quadratic attenuation term controlling rapid falloff at distance
+     */
     void set_attenuation(float constant, float linear, float quadratic)
     {
         m_constant = constant;
@@ -17,16 +51,45 @@ public:
         m_quadratic = quadratic;
     }
 
+    /**
+     * @brief Returns the world-space position of the light
+     *
+     * @return Position vector
+     */
     glm::vec3 get_position()  const { return m_position; }
-    float     get_constant()  const { return m_constant; }
-    float     get_linear()    const { return m_linear; }
-    float     get_quadratic() const { return m_quadratic; }
+
+    /**
+     * @brief Returns the constant attenuation coefficient
+     *
+     * @return Constant term of the attenuation equation
+     */
+    float get_constant()  const { return m_constant; }
+
+    /**
+     * @brief Returns the linear attenuation coefficient
+     *
+     * @return Linear term of the attenuation equation
+     */
+    float get_linear()    const { return m_linear; }
+
+    /**
+     * @brief Returns the quadratic attenuation coefficient
+     *
+     * @return Quadratic term of the attenuation equation
+     */
+    float get_quadratic() const { return m_quadratic; }
 
 private:
 
-    glm::vec3 m_position{ 0.0f, 0.0f, 0.0f };
+    // World-space position of the light source
+    glm::vec3 m_position { 0.0f, 0.0f, 0.0f };
 
-    float     m_constant{ 1.0f };
-    float     m_linear{ 0.09f };
-    float     m_quadratic{ 0.032f };
+    // Constant term of the attenuation equation
+    float m_constant { 1.0f };
+
+    // Linear term of the attenuation equation
+    float m_linear { 0.09f };
+
+    // Quadratic term of the attenuation equation
+    float m_quadratic { 0.032f };
 };

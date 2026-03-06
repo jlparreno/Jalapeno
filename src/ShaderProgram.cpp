@@ -2,14 +2,14 @@
 
 void ShaderProgram::add_shader(ShaderType type, const std::string& path) 
 {
-    std::string source = load_file(path);
+    std::string source = load_file(type, path);
     unsigned int shaderID = compile_stage(type, source);
 
     // Store the id for later linking
     m_program_stages[type] = shaderID;
 }
 
-std::string ShaderProgram::load_file(const std::string& path)
+std::string ShaderProgram::load_file(ShaderType type, const std::string& path)
 {
     // Check if the file exists in the disk
     if (!std::filesystem::exists(path)) 

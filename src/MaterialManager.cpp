@@ -17,9 +17,10 @@ MaterialType MaterialManager::get_material_type(const aiMaterial* mat)
     bool has_metallic = mat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS;
     bool has_roughness = mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS;
 
+    // If there is any PBR attribute, then Material is PBRMaterial
     if (has_metallic || has_roughness)
         return MaterialType::PBR;
 
-    // Only phong supported now
+    // Phong is the default
     return MaterialType::Phong;
 }

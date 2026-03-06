@@ -2,12 +2,10 @@
 
 #include <glm/glm.hpp>
 #include <string>
-#include <variant>
-
-#define MAX_BONE_INFLUENCE 4
 
 /**
 * @enum ShaderType
+*
 * @brief Enum representing different types of GLSL shader stages
 */
 enum class ShaderType
@@ -20,12 +18,22 @@ enum class ShaderType
     Compute
 };
 
+/**
+ * @enum LightType
+ *
+ * @brief Represents the type of a light source in the scene
+ */
 enum class LightType
 {
     Point,
     Directional
 };
 
+/**
+ * @enum MaterialType
+ *
+ * @brief Represents the shading model used by a material
+ */
 enum class MaterialType
 {
     Lambert,
@@ -33,6 +41,15 @@ enum class MaterialType
     PBR
 };
 
+/**
+ * @struct Vertex
+ *
+ * @brief Represents a single vertex with all its associated attributes
+ *
+ * This struct defines the per-vertex data layout used throughout the engine.
+ * It is uploaded directly to the GPU via VBOs and its memory layout must
+ * match the vertex attribute pointers configured in Mesh::setup_buffers().
+ */
 struct Vertex
 {
     glm::vec3 position;
@@ -41,10 +58,4 @@ struct Vertex
 
     glm::vec3 tangent;
     glm::vec3 bitangent;
-
-    // Bone indexes which will influence this vertex
-    int m_bone_ids[MAX_BONE_INFLUENCE];
-
-    // Weights from each bone
-    float m_bone_weights[MAX_BONE_INFLUENCE];
 };

@@ -18,12 +18,12 @@ struct DirectionalLight
 };
 
 #define MAX_POINT_LIGHTS 8
-uniform PointLight u_point_lights[MAX_POINT_LIGHTS];
-uniform int        u_num_point_lights;
+uniform PointLight point_lights[MAX_POINT_LIGHTS];
+uniform int        num_point_lights;
 
 #define MAX_DIRECTIONAL_LIGHTS 4
-uniform DirectionalLight u_directional_lights[MAX_DIRECTIONAL_LIGHTS];
-uniform int              u_num_directional_lights;
+uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
+uniform int              num_directional_lights;
 
 struct Material 
 {
@@ -38,7 +38,6 @@ in vec2 TexCoords;
 
 // Textures
 uniform sampler2D diffuse_tex;
-uniform sampler2D normal_tex;
 
 out vec4 FragColor;
 
@@ -49,13 +48,15 @@ vec3 get_diffuse_color()
     return texture(diffuse_tex, TexCoords).rgb * material.diffuse_color;
 }
 
+// Calculates contribution of a single point light
 vec3 compute_point_light(PointLight light, vec3 normal, vec3 diffuse_color)
 {
     vec3  light_dir   = normalize(light.position - FragPos);
     float dist        = length(light.position - FragPos);
-    float attenuation = 1.0 / (light.constant
-                      + light.linear    * dist
-                      + light.quadratic * dist * dist);
+
+    float attenuation = 1.0 / (light.constant + 
+                               light.linear * dist + 
+                               light.quadratic * dist * dist);
 
     float diff    = max(dot(normal, light_dir), 0.0);
     vec3  diffuse = diff * diffuse_color * light.color * light.intensity;
@@ -63,6 +64,7 @@ vec3 compute_point_light(PointLight light, vec3 normal, vec3 diffuse_color)
     return diffuse * attenuation;
 }
 
+// Calculates contribution of a single directional light
 vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 base_color)
 {
     vec3  light_dir = normalize(-light.direction);
@@ -74,22 +76,23 @@ void main()
 {
     vec3 normal = normalize(Normal);
 
-    //Get diffuse color, using texture if any
+    // Diffuse color, textured or not
     vec3 diffuse_color   = get_diffuse_color();
 
     // Ambient
     vec3 result = material.ambient_color * diffuse_color;
 
-    for (int i = 0; i < u_num_point_lights; i++)
+    // Accumulate each point light contribution
+    for (int i = 0; i < num_point_lights; i++)
     {
-        result += compute_point_light(u_point_lights[i], normal, diffuse_color);
+        result += compute_point_light(point_lights[i], normal, diffuse_color);
     }
 
-    for (int i = 0; i < u_num_directional_lights; i++)
+    // Accumulate each directional light contribution
+    for (int i = 0; i < num_directional_lights; i++)
     {
-        result += compute_directional_light(u_directional_lights[i], normal, diffuse_color);
+        result += compute_directional_light(directional_lights[i], normal, diffuse_color);
     }
     
-    // Final result
     FragColor = vec4(result, 1.0);
 }
