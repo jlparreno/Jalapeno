@@ -8,12 +8,23 @@ It’s designed for experiments and real-time graphics research.
 - **Forward Pipeline**
   - At the moment only a simple forward pass has been implemented
   
-- **Assimp Models and Materials Import**
+- **Models Import**
   - Support for loading any model supported by Assimp library.
-  - Only basic Materials are supported now, with asssociated textures.
 
 - **Anti-Aliasing**
   - Configurable MSAA
+
+- **Lighting**
+  - Directional Lights
+  - Point Lights
+  - No shadows yet
+
+- **Materials**
+  - Lambert Materials
+  - Phong Materials
+  - PBR Materials
+
+- **PBR (Metallic-Roughness)**
 
 ## Screenshots
 
@@ -26,12 +37,3 @@ It’s designed for experiments and real-time graphics research.
 |------      |--------------------------|
 | WASD       | Move                     |
 | Alt + LMB  | Camera rotation          |
-
-## Folder structure
-
-- `include/` - Header files
-- `src/` - Source files
-- `shaders/` - Shaders
-- `textures/` - Textures
-- `models/` - Models
-- `third_party/` - External libraries
