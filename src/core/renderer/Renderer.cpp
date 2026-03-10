@@ -22,12 +22,27 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
 	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
 	shader_mgr.load_program("pbr", { shader_dir + "simple_lighting.vert", shader_dir + "pbr.frag" });
+	shader_mgr.load_program("depth", { shader_dir + "depth.vert", shader_dir + "depth.frag" });
 
 	SPDLOG_INFO("Creating main Framebuffer");
 
 	// Create needed framebuffers
 	auto& framebuffer_mgr = FramebufferManager::instance();
-	framebuffer_mgr.create_framebuffer("main", SRC_WIDTH, SRC_HEIGHT, NUM_SAMPLES);
+
+	// Main FBO
+	FramebufferSpec main_spec;
+	main_spec.width = SRC_WIDTH; 
+	main_spec.height = SRC_HEIGHT; 
+	main_spec.samples = NUM_SAMPLES;
+	main_spec.attachments = {
+		{ GL_RGBA16F,          GL_COLOR_ATTACHMENT0        },
+		{ GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT }
+	};
+	framebuffer_mgr.create_framebuffer("main", main_spec);
+
+	// Create render passes (IN ORDER!)
+	add_render_pass<ShadowPass>();
+	add_render_pass<GeometryPass>();
 }
 
 void Renderer::run()
@@ -131,129 +146,26 @@ void Renderer::render_scene()
 		return;
 	}
 
-	// TODO: Render Passes
-	// Here the renderer will call the different passes. It will control de framebuffer bindings.
-	// The responsibility of draw each pass is for each object.
-	// Draw call will include which pass are we drawing, and each object decides what to do
-
-
-	// Forward rendering: Main Pass
-	Framebuffer* fbo = FramebufferManager::instance().get_framebuffer("main");
-
-	// Check valid FBO
-	if (!fbo)
+	// Call to the configured Render Passes
+	for (auto& pass : m_passes)
 	{
-		SPDLOG_ERROR("Invalid FBO for Main Pass");
-		return;
+		pass->execute(*m_scene);
 	}
-	
-	fbo->bind();
-
-	draw_all_renderables();
-
-	fbo->unbind();
-
-	//TODO: More passes??
 
 	// Blit to GLFW default FBO
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo->get_ID());
+	Framebuffer* main_fbo = FramebufferManager::instance().get_framebuffer("main");
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, main_fbo->get_ID());
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 	glViewport(0, 0, m_width, m_height);
 	
 	// Blit operation (only color at the moment). If our FBO is multi-sampled, this vlit will resolve into the GLFW FBO (no MS)
-	glBlitFramebuffer(0, 0, fbo->get_width(), fbo->get_height(), 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, main_fbo->get_width(), main_fbo->get_height(), 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	// Unbind
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-}
-
-void Renderer::draw_all_renderables()
-{
-	// Clear screen with out default clear color
-	glClearColor(0.16f, 0.18f, 0.20f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	// Configure OpenGL state
-	// TODO: Create OpenGL context manager class
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-
-	glViewport(0, 0, m_width, m_height);
-
-	// Setup matrices with scene camera
-	Camera* camera = m_scene->get_active_camera();
-	float aspect = glm::clamp((float)m_width / (float)m_height, MIN_ASPECT, MAX_ASPECT);
-
-	glm::mat4 view_mat = camera->get_view_matrix();
-	glm::mat4 projection_mat = glm::perspective(glm::radians(camera->get_fov()), aspect, 0.1f, 100.0f);
-
-	// Iterate all scene objects calling each draw function
-	for (const Renderable* renderable : m_scene->get_scene_renderables())
-	{
-		glm::mat4 model = renderable->get_model_matrix();
-
-		for (auto& mesh : renderable->get_meshes())
-		{
-			Material* material = mesh.get_material();
-			ShaderProgram* shader = material->get_shader();
-
-			shader->bind();
-
-			// Set scene transforms data
-			shader->set_uniform("model", model);
-			shader->set_uniform("view", view_mat);
-			shader->set_uniform("projection", projection_mat);
-			shader->set_uniform("view_pos", camera->get_position());
-
-			//Upload lights data to the shader
-			upload_lights(shader);
-
-			//Apply specific material uniforms and bind textures
-			material->apply_uniforms(shader);
-
-			// Draw the mesh
-			mesh.draw(shader);
-
-			shader->unbind();
-		}
-	}
-}
-
-void Renderer::upload_lights(ShaderProgram* shader)
-{
-	int point_index = 0;
-	int directional_index = 0;
-
-	// Point lights are uploaded to the u_point_lights array and 
-	// directional lights to the u_directional_lights array
-	for (auto& light : m_scene->get_scene_lights())
-	{
-		if (auto* pl = dynamic_cast<PointLight*>(light.get()))
-		{
-			std::string base = "point_lights[" + std::to_string(point_index) + "].";
-			shader->set_uniform(base + "position", pl->get_position());
-			shader->set_uniform(base + "color", pl->get_color());
-			shader->set_uniform(base + "intensity", pl->get_intensity());
-			shader->set_uniform(base + "constant", pl->get_constant());
-			shader->set_uniform(base + "linear", pl->get_linear());
-			shader->set_uniform(base + "quadratic", pl->get_quadratic());
-			point_index++;
-		}
-		else if (auto* dl = dynamic_cast<DirectionalLight*>(light.get()))
-		{
-			std::string base = "directional_lights[" + std::to_string(directional_index) + "].";
-			shader->set_uniform(base + "direction", dl->get_direction());
-			shader->set_uniform(base + "color", dl->get_color());
-			shader->set_uniform(base + "intensity", dl->get_intensity());
-			directional_index++;
-		}
-	}
-
-	// Count uniforms
-	shader->set_uniform("num_point_lights", point_index);
-	shader->set_uniform("num_directional_lights", directional_index);
 }
 
 void Renderer::resize(int width, int height)
@@ -292,6 +204,7 @@ void Renderer::terminate()
 	glDeleteProgram(shader_mgr.get_program("lambert")->get_id());
 	glDeleteProgram(shader_mgr.get_program("phong")->get_id());
 	glDeleteProgram(shader_mgr.get_program("pbr")->get_id());
+	glDeleteProgram(shader_mgr.get_program("depth")->get_id());
 
 	// TODO: Check if loaded models buffers are correctly destroyed
 	//glDeleteVertexArrays(1, &cube_VAO);

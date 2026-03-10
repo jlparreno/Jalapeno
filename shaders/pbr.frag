@@ -17,6 +17,10 @@ struct DirectionalLight
     vec3  direction;
     vec3  color;
     float intensity;
+
+    bool        shadows_enabled;
+    mat4        light_matrix;
+    sampler2D   shadow_tex;
 };
 
 #define MAX_POINT_LIGHTS 8
@@ -89,12 +93,40 @@ vec3 fresnel_schlick(float cos_theta, vec3 F0)
 // Tone - mapping
 vec3 aces_tone_map(vec3 x)
 {
-    float a = 2.51f;
-    float b = 0.03f;
-    float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
     return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+//Directional Light Shadows
+float compute_shadow(int index, vec3 normal, vec3 light_dir)
+{
+    vec4  frag_light_space = directional_lights[index].light_matrix * vec4(FragPos, 1.0);
+    vec3  proj_coords      = frag_light_space.xyz / frag_light_space.w;
+    proj_coords            = proj_coords * 0.5 + 0.5;
+
+    if (proj_coords.z > 1.0)
+        return 0.0;
+
+    // Bias for shadow acne, at the moment giving Peter panning
+    //float bias        = max(0.005 * (1.0 - dot(normal, light_dir)), 0.0001);
+    float shadow      = 0.0;
+    vec2  texel_size  = 1.0 / textureSize(directional_lights[index].shadow_tex, 0);
+
+    // PCF function, 9 samples around fragment
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            float pcf_depth = texture(directional_lights[index].shadow_tex, proj_coords.xy + vec2(x, y) * texel_size).r;
+            shadow += proj_coords.z /*- bias*/ > pcf_depth ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 9.0;  // 9 samples average
 }
 
 void main()
@@ -193,7 +225,15 @@ void main()
         vec3  kS    = F;
         vec3  kD    = (vec3(1.0) - kS) * (1.0 - metallic);
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+
+        // Compute shadow for this light
+        float shadow = 0.0;
+        if(directional_lights[i].shadows_enabled)
+        {
+            shadow = compute_shadow(i, N, L);
+        }
+
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
     }
 
     // Minimal ambient for dark zones

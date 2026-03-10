@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
 
@@ -58,4 +59,26 @@ struct Vertex
 
     glm::vec3 tangent;
     glm::vec3 bitangent;
+};
+
+/**
+ * @brief Describes a single attachment of a Framebuffer
+ */
+struct AttachmentSpec
+{
+    GLenum internal_format{ GL_RGBA16F };
+    GLenum attachment_point{ GL_COLOR_ATTACHMENT0 };
+};
+
+/**
+ * @brief Describes the full configuration of a Framebuffer
+ */
+struct FramebufferSpec
+{
+    int width{ 1920 };
+    int height{ 1080 };
+    int samples{ 1 };
+    int resizable{ true };
+
+    std::vector<AttachmentSpec> attachments;
 };

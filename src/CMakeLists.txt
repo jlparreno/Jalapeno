@@ -30,6 +30,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/core
+        ${CMAKE_CURRENT_SOURCE_DIR}/core/renderer
         ${CMAKE_CURRENT_SOURCE_DIR}/renderables
         ${CMAKE_CURRENT_SOURCE_DIR}/materials
         ${CMAKE_CURRENT_SOURCE_DIR}/lights

@@ -10,6 +10,8 @@
 #include "ShaderManager.h"
 #include "InputManager.h"
 #include "UIManager.h"
+#include "ShadowPass.h"
+#include "GeometryPass.h"
 #include "config.h"
 
 #include <string>
@@ -26,7 +28,7 @@
  * the render loop, and delegates draw operations to the scene objects.
  *
  * The Renderer also handles framebuffer resizing, profiling hooks, and calls the appropriate
- * rendering passes (currently a single forward pass).
+ * rendering passes
  */
 class Renderer
 {
@@ -68,27 +70,33 @@ public:
     Renderer& operator=(Renderer&&) = delete;
 
     /**
-     * @brief Assigns the scene to be rendered.
+     * @brief Adds a new render pass of type T to the render pipeline
      *
-     * @param scene Pointer to the Scene object to render.
+     * @tparam T The render pass type, derived from RenderPass
+     *
+     * @return Pointer to the created render pass of type T
      */
-    void set_scene(Scene* scene) { m_scene = scene; }
+    template<typename T>
+    T* add_render_pass()
+    {
+        // Create the render pass
+        auto pass = std::make_unique<T>();
+        T* raw = pass.get();
+
+        // Guardarlo como Material
+        m_passes.push_back(std::move(pass));
+
+        return raw;
+    }
 
     /**
      * @brief Main execution loop of the renderer.
      *
-     * This method enters the main loop, processes input, 
+     * This method enters the main loop, processes input,
      * updates internal systems, draws the active scene, and manages
      * framerate timing until the window is closed.
      */
     void run();
-
-    /**
-     * @brief Retrieves the currently bound scene.
-     *
-     * @return Pointer to the active Scene, or nullptr if none has been set.
-     */
-    Scene* get_scene() { return m_scene; }
 
     /**
      * @brief Resizes the renderer’s output viewport and any dependent buffers.
@@ -99,6 +107,20 @@ public:
      * @param height New height in pixels.
      */
     void resize(int width, int height);
+
+    /**
+     * @brief Assigns the scene to be rendered.
+     *
+     * @param scene Pointer to the Scene object to render.
+     */
+    void set_scene(Scene* scene) { m_scene = scene; }
+
+    /**
+     * @brief Retrieves the currently bound scene.
+     *
+     * @return Pointer to the active Scene, or nullptr if none has been set.
+     */
+    Scene* get_scene() { return m_scene; }
 
 
     // Timing
@@ -136,26 +158,6 @@ private:
     void render_scene();
 
     /**
-     * @brief Renders all models belonging to the active scene.
-     * 
-     * Called internally by render_scene().
-     * Iterates through the renderable list and issues draw calls.
-     * Each renderable should have a valid material to draw.
-     */
-    void draw_all_renderables();
-
-    /**
-     * @brief Uploads all active scene lights to the given shader program
-     *
-     * Iterates the scene's light list, classifies each light by type, and uploads
-     * their properties as uniform arrays to the shader. The shader program is assumed 
-     * to be already bound before this call.
-     *
-     * @param shader Pointer to the ShaderProgram that will receive the light uniforms.
-     */
-    void upload_lights(ShaderProgram* shader);
-
-    /**
      * @brief Cleans up the renderer before shutdown.
      *
      * Frees all resources,terminates UI and GLFW.
@@ -170,13 +172,6 @@ private:
     void display_frame_times();
 
 
-    // TODO: Function to render only an specific model by name
-    // void render_model(Model* model);
-
-    // TODO: Function to bind an specific framebuffer by name
-    // void bind_framebuffer(const std::string& name);
-
-
     // Name of the renderer
     std::string     m_name;
 
@@ -189,4 +184,7 @@ private:
     // Renderer dimensions
     int             m_width;
     int             m_height;
+
+    // Ordered list of passes configured in the renderer
+    std::vector<std::unique_ptr<RenderPass>> m_passes;
 };

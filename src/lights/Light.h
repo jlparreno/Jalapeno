@@ -1,5 +1,10 @@
 #pragma once
 
+#include "TextureManager.h"
+#include "FramebufferManager.h"
+#include "Camera.h"
+#include "config.h"
+
 #include <glm/glm.hpp>
 #include <string>
 
@@ -52,10 +57,13 @@ public:
 
     /**
      * @brief Enables or disables shadow casting for this light
+     * 
+     * If the shadow map has not been initialized for this light, this
+     * method calls to init_shadow_map to correctly set up this Framebuffer
      *
      * @param value True to enable shadow casting, false to disable
      */
-    void set_shadows_enabled(bool value) { m_shadows_enabled = value; }
+    void set_shadows_enabled(bool value);
 
     /**
      * @brief Returns the identifier name of the light
@@ -85,17 +93,56 @@ public:
      */
     bool get_shadows_enabled() const { return m_shadows_enabled; }
 
+    /**
+     * @brief Returns the shadow map framebuffer associated with this light
+     *
+     * @return Raw pointer to the shadow map Framebuffer, or nullptr if not initialized
+     */
+    Framebuffer* get_shadow_fbo() const { return m_shadow_fbo; }
+
+    /**
+     * @brief Returns the light space transformation matrix
+     *
+     * This matrix transforms world space positions into the light's clip space.
+     *
+     * @return Const reference to the light space matrix
+     */
+    const glm::mat4& get_light_space_matrix() const { return m_light_space_matrix; }
+
+    /**
+     * @brief Initializes the shadow map framebuffer for this light
+     *
+     * Must be called before shadows can be rendered for this light. 
+     * Each subclass determines the appropriate framebuffer configuration for its light type.
+     *
+     * @param size Resolution of the shadow map in pixels (width and height)
+     */
+    virtual void init_shadow_map(int size) = 0;
+
+    /**
+     * @brief Recomputes the light space matrix for the current frame
+     *
+     * Each light type implements its own projection strategy.
+     */
+    virtual void compute_light_space_matrix() = 0;
+
 protected:
 
     // Identifier name used to reference this light
-    std::string m_name;
+    std::string     m_name;
 
     // RGB color of the light
-    glm::vec3   m_color { 1.0f, 1.0f, 1.0f };
+    glm::vec3       m_color { 1.0f, 1.0f, 1.0f };
 
     // Intensity multiplier applied to the light color output
-    float       m_intensity { 1.0f };
+    float           m_intensity { 1.0f };
 
     // Whether this light casts shadows
-    bool        m_shadows_enabled { false };
+    bool            m_shadows_enabled { false };
+
+    // View-projection matrix to render shadow map
+    glm::mat4       m_light_space_matrix{ glm::mat4(1.0f) };
+
+    // Shadow map FBO
+    Framebuffer*    m_shadow_fbo{ nullptr };
 };

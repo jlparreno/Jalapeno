@@ -62,10 +62,11 @@ int main()
     // LIGHTS
     DirectionalLight* sun = scene->add_directional_light(
         "sun",
-        glm::vec3(-0.5f, -1.0f, -0.3f),  // dirección
-        glm::vec3(1.0f, 0.95f, 0.8f),    // color cálido
-        1.5f                               // intensidad
+        glm::vec3(0.3f, -1.0f, -0.1f),  // Direction
+        glm::vec3(1.0f, 0.95f, 0.8f),   // Warmer color
+        1.5f                            // Intensity
     );
+    sun->set_shadows_enabled(true);
 
     /*PointLight* fill = scene->add_point_light(
         "fill",

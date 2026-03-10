@@ -1,7 +1,10 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Light.h"
+
 
 /**
  * @class PointLight
@@ -78,6 +81,18 @@ public:
      * @return Quadratic term of the attenuation equation
      */
     float get_quadratic() const { return m_quadratic; }
+
+    /**
+     * @brief Initializes the shadow map framebuffer for this light
+     *
+     * @param size Resolution of the shadow map in pixels (width and height)
+     */
+    void init_shadow_map(int size = 2048) override;
+
+    /**
+     * @brief Recomputes the light space matrix for the current frame
+     */
+    void compute_light_space_matrix() override;
 
 private:
 

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Framebuffer.h"
-
 #include <spdlog/spdlog.h>
+
+#include "Framebuffer.h"
+#include "types.h"
 
 #include <string>
 #include <unordered_map>
@@ -53,18 +54,16 @@ public:
     FramebufferManager& operator=(FramebufferManager&&) = delete;
 
     /**
-     * @brief Creates a framebuffer with a unique name.
+     * @brief Creates a framebuffer with a unique name
      *
      * If a framebuffer with the same name already exists, it will be replaced.
      *
-     * @param name Unique identifier for the framebuffer.
-     * @param width Width in pixels.
-     * @param height Height in pixels.
-     * @param samples Num of samples of the framebuffer (MSAA)
+     * @param name Unique identifier for the framebuffer
+     * @param spec Full specification of the framebuffer
      * 
-     * @return Pointer to the created framebuffer.
+     * @return Pointer to the created framebuffer
      */
-    Framebuffer* create_framebuffer(const std::string& name, int width, int height, int samples = 1);
+    Framebuffer* create_framebuffer(const std::string& name, const FramebufferSpec& spec);
 
     /**
      * @brief Retrieves a framebuffer by name.

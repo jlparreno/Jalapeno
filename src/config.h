@@ -10,3 +10,6 @@ constexpr float MAX_ASPECT = 16.0f / 9.0f;
 
 // Multisampling
 constexpr int NUM_SAMPLES = 8;
+
+// Shadow maps size, always squared
+constexpr int SHADOWMAPS_SIZE = 2048;

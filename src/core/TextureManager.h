@@ -51,6 +51,19 @@ public:
     TextureManager& operator=(TextureManager&&) = delete;
 
     /**
+     * @brief Creates and registers an empty texture under the given name
+     *
+     * Instantiates a default-constructed Texture with no image data and stores
+     * it in the manager under the given name. Useful for creating textures that
+     * will be populated later.
+     *
+     * @param name Unique identifier used to retrieve the texture later via get_texture()
+     * 
+     * @return Raw pointer to the newly created Texture
+     */
+    Texture* add_texture(const std::string& name);
+
+    /**
      * @brief Loads a texture from disk if it is not already loaded
      *
      * If the texture with the given name already exists in the manager,
@@ -123,7 +136,13 @@ private:
     // Private destructor to enforce singleton pattern
     ~TextureManager() = default;
 
-
+    /**
+     * @brief Initializes the TextureManager and creates the default white texture
+     *
+     * Creates a 1x1 white RGBA texture used as a fallback when a material has no
+     * texture assigned to a given slot. This ensures shaders always receive a valid
+     * texture binding, avoiding undefined sampling behavior.     
+     */
     void init();
 
     // Map storing textures by their unique name

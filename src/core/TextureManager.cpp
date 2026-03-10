@@ -14,6 +14,15 @@ void TextureManager::init()
     m_white_texture = std::move(tex);
 }
 
+Texture* TextureManager::add_texture(const std::string& name)
+{
+    // Default empty texture creation
+    auto tex = std::make_unique<Texture>();
+    m_textures[name] = std::move(tex);
+
+    return m_textures[name].get();
+}
+
 Texture* TextureManager::load_texture(const std::string& name, const std::string& path, bool vertical_flip, bool generate_mipmaps)
 {
     // If it exists, return the previously loaded texture

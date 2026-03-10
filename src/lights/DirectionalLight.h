@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/gtc/matrix_transform.hpp>
 #include "Light.h"
 
 /**
@@ -45,6 +46,18 @@ public:
      * @return Unit vector representing the direction of the light
      */
     glm::vec3 get_direction() const { return m_direction; }
+
+    /**
+     * @brief Initializes the shadow map framebuffer for this light
+     *
+     * @param size Resolution of the shadow map in pixels (width and height)
+     */
+    void init_shadow_map(int size = 2048) override;
+
+    /**
+     * @brief Recomputes the light space matrix for the current frame
+     */
+    void compute_light_space_matrix() override;
 
 private:
 

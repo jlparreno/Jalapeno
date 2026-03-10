@@ -28,7 +28,6 @@ void Mesh::draw(ShaderProgram* shader) const
 
     // Recover previous state
     // TODO: Create a context class and manage states there
-    glActiveTexture(GL_TEXTURE0);
 }
 
 void Mesh::setup_buffers()
