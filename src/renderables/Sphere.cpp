@@ -6,12 +6,6 @@ Sphere::Sphere(float radius, unsigned int sectors, unsigned int stacks)
     generate(radius, sectors, stacks);
 }
 
-void Sphere::draw(ShaderProgram* shader) const
-{
-    //Call to draw the sphere mesh
-    m_meshes[0].draw(shader);
-}
-
 void Sphere::generate(float radius, unsigned int sectors, unsigned int stacks)
 {
     std::vector<Vertex> vertices;

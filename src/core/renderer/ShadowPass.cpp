@@ -39,7 +39,7 @@ void ShadowPass::execute(const Scene& scene)
         for (auto& renderable : scene.get_scene_renderables())
         {
             m_shadowmap_shader->set_uniform("model", renderable->get_model_matrix());
-            renderable->draw(m_shadowmap_shader);
+            renderable->draw_geometry();
         }
     }
 

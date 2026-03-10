@@ -7,15 +7,6 @@ Model::Model(const std::string& name, const std::string& path) :
     load_model(path);
 }
 
-void Model::draw(ShaderProgram* shader) const
-{
-    //Call to draw all meshes that compose the model
-    for (unsigned int i = 0; i < m_meshes.size(); i++)
-    {
-        m_meshes[i].draw(shader);
-    }
-}
-
 void Model::load_model(const std::string& path)
 {
     // Read file with ASSIMP

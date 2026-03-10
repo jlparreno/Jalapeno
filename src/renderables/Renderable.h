@@ -46,7 +46,12 @@ public:
      * Derived classes must implement this method to submit their geometry
      * to the GPU. The shader is assumed to be already bound before this call.
      */
-    virtual void draw(ShaderProgram* shader) const = 0;
+    void draw(ShaderProgram* shader) const;
+
+    /**
+     * @brief Draws all meshes in this renderable without applying material uniforms
+     */
+    void draw_geometry() const;
 
     /**
      * @brief Returns all meshes that compose this renderable

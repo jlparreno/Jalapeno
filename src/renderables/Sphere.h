@@ -31,16 +31,6 @@ public:
     Sphere(float radius = 1.0f, unsigned int sectors = 36, unsigned int stacks = 18);
 
     /**
-     * @brief Draws the sphere using the given shader
-     *
-     * Binds the material and submits the sphere's mesh to the GPU.
-     * The shader is assumed to be already bound before this call.
-     *
-     * @param shader Pointer to the ShaderProgram to use for rendering
-     */
-    void draw(ShaderProgram* shader) const override;
-
-    /**
      * @brief Returns the sphere mesh
      *
      * A sphere always contains exactly one mesh generated procedurally

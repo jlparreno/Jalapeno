@@ -14,3 +14,15 @@ glm::mat4 Renderable::get_model_matrix() const
 
     return model;
 }
+
+void Renderable::draw(ShaderProgram* shader) const
+{
+    for (auto& mesh : get_meshes())
+        mesh.draw(shader);
+}
+
+void Renderable::draw_geometry() const
+{
+    for (auto& mesh : get_meshes())
+        mesh.draw_geometry();
+}

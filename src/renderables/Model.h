@@ -48,15 +48,6 @@ public:
     Model(const std::string& name, const std::string& path);
 
     /**
-     * @brief Draws the model using the provided shader program.
-     *
-     * @param shader Pointer to the ShaderProgram used to draw the mesh.
-     * 
-     * Iterates over all stored meshes and calls their draw function.
-     */
-    void draw(ShaderProgram* shader) const override;
-
-    /**
      * @brief Returns the model name.
      *
      * @return Model name string.

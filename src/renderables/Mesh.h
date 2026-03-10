@@ -35,13 +35,18 @@ public:
     Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, Material* material);
 
     /**
-     * @brief Renders the mesh using a given shader program.
+     * @brief Draws the mesh applying all material uniforms to the given shader
      *
-     * @param shader Pointer to the ShaderProgram used to draw the mesh.
-     *
-     * Binds the VAO, submits the draw call, and restores OpenGL state.
+     * @param shader The shader program to upload material uniforms to
      */
     void draw(ShaderProgram* shader) const;
+
+    /**
+     * @brief Draws the mesh geometry without applying any material uniforms
+     * 
+     * Used in passes such as the ShadowPass where material properties are irrelevant.
+     */
+    void draw_geometry() const;
 
     /**
      * @brief Sets the material used to render this mesh

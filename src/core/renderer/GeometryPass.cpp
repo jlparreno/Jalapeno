@@ -51,9 +51,6 @@ void GeometryPass::execute(const Scene& scene)
 			//Upload lights data to the shader
 			upload_lights(scene, shader);
 
-			//Apply specific material uniforms and bind textures
-			material->apply_uniforms(shader);
-
 			// Draw the mesh
 			mesh.draw(shader);
 

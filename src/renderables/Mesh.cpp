@@ -22,12 +22,14 @@ void Mesh::draw(ShaderProgram* shader) const
     m_material->apply_uniforms(shader);
 
     // Draw mesh
+    draw_geometry();
+}
+
+void Mesh::draw_geometry() const
+{
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(m_indices.size()), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-
-    // Recover previous state
-    // TODO: Create a context class and manage states there
 }
 
 void Mesh::setup_buffers()
