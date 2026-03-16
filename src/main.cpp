@@ -38,10 +38,10 @@ int main()
     }
 
     // MODELS
-   /* Sphere* sphere = scene->add_sphere("sphere1");
+    /*Sphere* sphere = scene->add_sphere("sphere1");
     if (sphere)
     {
-        sphere->set_material(lambert_material);
+        sphere->set_material(phong_material);
         sphere->set_position(glm::vec3(0.0f, 1.0f, 0.0f));
         sphere->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
     }*/
@@ -68,13 +68,23 @@ int main()
     );
     sun->set_shadows_enabled(true);
 
-    /*PointLight* fill = scene->add_point_light(
-        "fill",
-        glm::vec3(0.0f, 5.0f, 0.0f),
+    /*PointLight* point1 = scene->add_point_light(
+        "point1",
+        glm::vec3(5.0f, 5.0f, 0.0f),
         glm::vec3(1.0f),
         1.0f
     );
-    fill->set_attenuation(1.0f, 0.09f, 0.032f);*/
+    point1->set_attenuation(1.0f, 0.09f, 0.032f);
+    point1->set_shadows_enabled(true);*/
+
+    /*PointLight* point2 = scene->add_point_light(
+        "point2",
+        glm::vec3(-5.0f, 5.0f, 0.0f),
+        glm::vec3(1.0f),
+        1.0f
+    );
+    point2->set_attenuation(1.0f, 0.09f, 0.032f);
+    point2->set_shadows_enabled(true);*/
 
     // ------------------------------------------------------------------------------
     // RENDER LOOP

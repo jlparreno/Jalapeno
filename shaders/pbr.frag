@@ -2,6 +2,15 @@
 
 const float PI = 3.14159265359;
 
+const vec3 sample_offset_directions[20] = vec3[]
+(
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);  
+
 struct PointLight 
 {
     vec3  position;
@@ -10,6 +19,10 @@ struct PointLight
     float constant;
     float linear;
     float quadratic;
+
+    bool        shadows_enabled;
+    samplerCube shadow_cube;
+    float       far_plane;
 };
 
 struct DirectionalLight 
@@ -23,11 +36,11 @@ struct DirectionalLight
     sampler2D   shadow_tex;
 };
 
-#define MAX_POINT_LIGHTS 8
+#define MAX_POINT_LIGHTS 4
 uniform PointLight point_lights[MAX_POINT_LIGHTS];
 uniform int        num_point_lights;
 
-#define MAX_DIRECTIONAL_LIGHTS 4
+#define MAX_DIRECTIONAL_LIGHTS 2
 uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
 uniform int              num_directional_lights;
 
@@ -129,6 +142,34 @@ float compute_shadow(int index, vec3 normal, vec3 light_dir)
     return shadow / 9.0;  // 9 samples average
 }
 
+// Point Shadows
+float compute_point_shadow(samplerCube shadow_cube, vec3 light_pos, float far_plane)
+{
+    float shadow  = 0.0;
+    float bias    = 0.05; 
+    
+    // PCF control
+    float samples = 20.0;
+    float disk_radius = 0.01;
+    float offset  = 0.1;
+
+    vec3  frag_to_light = FragPos - light_pos;
+    float current_depth = length(frag_to_light);
+
+    // PCF to avoid jagged edges
+    for(int i = 0; i < samples; ++i)
+    {
+        float closest_depth = texture(shadow_cube, frag_to_light + sample_offset_directions[i] * disk_radius).r;
+        closest_depth *= far_plane;   // undo mapping [0;1]
+        if(current_depth - bias > closest_depth)
+            shadow += 1.0;
+    }
+    
+    shadow /= float(samples);
+
+    return shadow;
+}
+
 void main()
 {
     // Sample textures
@@ -204,7 +245,15 @@ void main()
         vec3  kD = (vec3(1.0) - kS) * (1.0 - metallic);
 
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+
+        // Compute point light shadow
+        float shadow = 0.0;
+        if (point_lights[i].shadows_enabled)
+        {
+            shadow = compute_point_shadow(point_lights[i].shadow_cube, point_lights[i].position, point_lights[i].far_plane);
+        }
+
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
     }
 
     // Directional Lights

@@ -54,44 +54,76 @@ void Framebuffer::create_attachment(const AttachmentSpec& attachment_spec)
     bool is_depth = (attachment_spec.attachment_point == GL_DEPTH_ATTACHMENT ||
                      attachment_spec.attachment_point == GL_DEPTH_STENCIL_ATTACHMENT);
 
-    auto texture_target = m_spec.samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+    // Default type
+    GLenum texture_target = GL_TEXTURE_2D;
+    
+    // Change type depending on spec
+    if (m_spec.samples > 1)
+    {
+        texture_target = GL_TEXTURE_2D_MULTISAMPLE;
+    }
+    else
+    {
+        if (m_spec.is_cubemap)
+            texture_target = GL_TEXTURE_CUBE_MAP;
+    }
 
+    // Choose format and data type depending on internal format
+    GLenum format = is_depth ? GL_DEPTH_COMPONENT : GL_RGBA;
+    GLenum data_type = GL_FLOAT;
+    GLenum filter = is_depth ? GL_NEAREST : GL_LINEAR;
+
+    if (attachment_spec.attachment_point == GL_DEPTH_STENCIL_ATTACHMENT)
+    {
+        format = GL_DEPTH_STENCIL;
+        data_type = GL_UNSIGNED_INT_24_8;
+    }
+
+    // Create texture/s
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(texture_target, texture);
 
-    if (m_spec.samples > 1)
+    if (m_spec.is_cubemap)
     {
-        glTexImage2DMultisample(texture_target, m_spec.samples, attachment_spec.internal_format, m_spec.width, m_spec.height, GL_TRUE);
+        // Create the 6 faces of the cubemap
+        for (int i = 0; i < 6; i++)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, attachment_spec.internal_format, m_spec.width, m_spec.height, 0, format, data_type, nullptr);
+        }
+        glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER, filter);
+        glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glFramebufferTexture(GL_FRAMEBUFFER, attachment_spec.attachment_point, texture, 0);
     }
     else
     {
-        // Choose format and data type depending on internal format
-        GLenum format = is_depth ? GL_DEPTH_COMPONENT : GL_RGBA;
-        GLenum data_type = GL_FLOAT;
-
-        if (attachment_spec.attachment_point == GL_DEPTH_STENCIL_ATTACHMENT)
+        if (m_spec.samples > 1)
         {
-            format = GL_DEPTH_STENCIL;
-            data_type = GL_UNSIGNED_INT_24_8;
+            glTexImage2DMultisample(texture_target, m_spec.samples, attachment_spec.internal_format, m_spec.width, m_spec.height, GL_TRUE);
+        }
+        else
+        {
+            glTexImage2D(texture_target, 0, attachment_spec.internal_format, m_spec.width, m_spec.height, 0, format, data_type, nullptr);
+
+            glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER, filter);
+            glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER, filter);
+
+            // Shadow maps: clamp to border to avoid shadows outside the frustum
+            if (is_depth)
+            {
+                glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+                glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+                float border[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                glTexParameterfv(texture_target, GL_TEXTURE_BORDER_COLOR, border);
+            }
         }
 
-        glTexImage2D(texture_target, 0, attachment_spec.internal_format, m_spec.width, m_spec.height, 0, format, data_type, nullptr);
-
-        glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        // Shadow maps: clamp to border to avoid shadows outside the frustum
-        if (is_depth)
-        {
-            glTexParameteri(texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-            glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-            float border[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-            glTexParameterfv(texture_target, GL_TEXTURE_BORDER_COLOR, border);
-        }
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment_spec.attachment_point, texture_target, texture, 0);
     }
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment_spec.attachment_point, texture_target, texture, 0);
 
     // Save created attachment texture ID
     if (is_depth)
@@ -147,7 +179,8 @@ void Framebuffer::bind() const
 void Framebuffer::bind_depth_as_texture(int slot) const
 {
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, m_depth_attachment);
+    GLenum target = m_spec.is_cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
+    glBindTexture(target, m_depth_attachment);
 }
 
 void Framebuffer::bind_color_as_texture(int index, int slot) const

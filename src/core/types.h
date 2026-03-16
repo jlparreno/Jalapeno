@@ -78,7 +78,8 @@ struct FramebufferSpec
     int width{ 1920 };
     int height{ 1080 };
     int samples{ 1 };
-    int resizable{ true };
+    bool resizable{ true };
+    bool is_cubemap{ false };
 
     std::vector<AttachmentSpec> attachments;
 };

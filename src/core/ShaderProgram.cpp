@@ -115,19 +115,6 @@ bool ShaderProgram::link_program()
     return true;
 }
 
-//void ShaderProgram::apply_material(const Material& material)
-//{
-//    switch (material.get_type())
-//    {
-//    case MaterialType::Phong:
-//        material.upload_uniforms(this);
-//        break;
-//    /*default:
-//        upload_generic_uniforms(material);
-//        break;*/
-//    }
-//}
-
 void ShaderProgram::set_uniform(const std::string& name, bool value) const
 {
     glUniform1i(glGetUniformLocation(m_id, name.c_str()), (int)value);

@@ -83,6 +83,24 @@ public:
     float get_quadratic() const { return m_quadratic; }
 
     /**
+     * @brief Returns the far plane distance used for point light shadow projection
+     *
+     * @return Far plane distance in world units
+     */
+    float get_far_plane() const { return m_far_plane; }
+
+    /**
+     * @brief Returns the six light space matrices used to render the shadow cubemap
+     *
+     * Each matrix corresponds to one face of the cubemap, combining a 90-degree
+     * perspective projection with a view matrix looking in the direction of that
+     * face. Updated every frame by compute_light_space_matrix().
+     *
+     * @return Const reference to the array of six light space matrices
+     */
+    const std::array<glm::mat4, 6>& get_shadow_matrices() const { return m_shadow_matrices; }
+
+    /**
      * @brief Initializes the shadow map framebuffer for this light
      *
      * @param size Resolution of the shadow map in pixels (width and height)
@@ -107,4 +125,10 @@ private:
 
     // Quadratic term of the attenuation equation
     float m_quadratic { 0.032f };
+
+    // Far plane distance used for shadow projection
+    float m_far_plane{ 25.0f };
+
+    // Matrices for shadow mapping
+    std::array<glm::mat4, 6> m_shadow_matrices;
 };

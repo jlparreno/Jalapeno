@@ -1,6 +1,8 @@
 #pragma once
 
 #include "RenderPass.h"
+#include "DirectionalLight.h"
+#include "PointLight.h"
 
 /**
  * @class ShadowPass
@@ -44,6 +46,9 @@ public:
 
 private:
 
-    // Depth-only shader used to render scene geometry into shadow map framebuffers
-    ShaderProgram* m_shadowmap_shader;
+    // Depth-only shader used to render scene geometry into shadow map framebuffers for directional lights
+    ShaderProgram* m_directional_shadows_shader;
+
+    // Depth-only shader used to render scene geometry into shadow map framebuffers for point lights
+    ShaderProgram* m_point_shadows_shader;
 };

@@ -17,8 +17,8 @@ struct DirectionalLight
     float intensity;
 };
 
-#define MAX_POINT_LIGHTS       8
-#define MAX_DIRECTIONAL_LIGHTS 4
+#define MAX_POINT_LIGHTS       4
+#define MAX_DIRECTIONAL_LIGHTS 2
 
 uniform PointLight       u_point_lights[MAX_POINT_LIGHTS];
 uniform DirectionalLight u_directional_lights[MAX_DIRECTIONAL_LIGHTS];

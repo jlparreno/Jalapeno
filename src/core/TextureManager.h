@@ -123,7 +123,25 @@ public:
      */
     const std::unordered_map<std::string, std::unique_ptr<Texture>>& get_all_textures() const { return m_textures; }
 
+    /**
+     * @brief Returns the default white 1x1 2D texture
+     *
+     * Used as a fallback when a material has no texture assigned for a given
+     * slot, ensuring shaders always sample a valid texture.
+     *
+     * @return Raw pointer to the white fallback Texture
+     */
     Texture* get_white_texture() const { return m_white_texture.get(); }
+
+    /**
+     * @brief Returns the default white 1x1 cubemap texture
+     *
+     * Used as a fallback to fill inactive samplerCube slots in the GeometryPass,
+     * ensuring all cubemap samplers reference a valid texture.
+     *
+     * @return Raw pointer to the white fallback cubemap Texture
+     */
+    Texture* get_white_cubemap() const { return m_white_cubemap.get(); }
 
 private:
 
@@ -151,5 +169,8 @@ private:
 
     // Default 1x1 white texture
     std::unique_ptr<Texture> m_white_texture;
+
+    // Default 1x1 white cubemap
+    std::unique_ptr<Texture> m_white_cubemap;
 };
 

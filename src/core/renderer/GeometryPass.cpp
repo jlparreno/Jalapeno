@@ -65,8 +65,6 @@ void GeometryPass::upload_lights(const Scene& scene, ShaderProgram* shader)
 {
 	int point_index = 0;
 	int directional_index = 0;
-	int texture_slot_index = 8;
-	int shadow_index = 0;
 
 	// Point lights are uploaded to the point_lights array and 
 	// directional lights to the directional_lights array
@@ -81,6 +79,18 @@ void GeometryPass::upload_lights(const Scene& scene, ShaderProgram* shader)
 			shader->set_uniform(base + "constant", pl->get_constant());
 			shader->set_uniform(base + "linear", pl->get_linear());
 			shader->set_uniform(base + "quadratic", pl->get_quadratic());
+			shader->set_uniform(base + "shadows_enabled", pl->get_shadows_enabled());
+
+			//Shadow maps if any
+			if (pl->get_shadows_enabled() && pl->get_shadow_fbo())
+			{
+				int shadow_unit = POINT_SHADOW_START + point_index;
+				pl->get_shadow_fbo()->bind_depth_as_texture(shadow_unit);
+
+				shader->set_uniform(base + "shadow_cube", shadow_unit);
+				shader->set_uniform(base + "far_plane", pl->get_far_plane());
+			}
+
 			point_index++;
 		}
 		else if (auto* dl = dynamic_cast<DirectionalLight*>(light.get()))
@@ -89,25 +99,44 @@ void GeometryPass::upload_lights(const Scene& scene, ShaderProgram* shader)
 			shader->set_uniform(base + "direction", dl->get_direction());
 			shader->set_uniform(base + "color", dl->get_color());
 			shader->set_uniform(base + "intensity", dl->get_intensity());
+			shader->set_uniform(base + "shadows_enabled", dl->get_shadows_enabled());
 
 			//Shadow maps if any
 			if (dl->get_shadows_enabled() && dl->get_shadow_fbo())
 			{
-				dl->get_shadow_fbo()->bind_depth_as_texture(texture_slot_index);
-
-				shader->set_uniform(base + "shadows_enabled", dl->get_shadows_enabled());
+				int shadow_unit = DIRECTIONAL_SHADOW_START + directional_index;
+				dl->get_shadow_fbo()->bind_depth_as_texture(shadow_unit);
+				
 				shader->set_uniform(base + "light_matrix", dl->get_light_space_matrix());
-				shader->set_uniform(base + "shadow_tex", texture_slot_index);
-				texture_slot_index++;
-				shadow_index++;
+				shader->set_uniform(base + "shadow_tex", shadow_unit);
 			}
 
 			directional_index++;
 		}
 	}
 
+	// Init unused slots to avoid default 0 for inactive samplers
+	for (int i = directional_index; i < MAX_DIRECTIONAL_LIGHTS; i++)
+	{
+		std::string base = "directional_lights[" + std::to_string(i) + "].";
+		shader->set_uniform(base + "shadows_enabled", false);
+		shader->set_uniform(base + "shadow_tex", INACTIVE_SHADOW_2D_UNIT);
+	}
+	for (int i = point_index; i < MAX_POINT_LIGHTS; i++)
+	{
+		std::string base = "point_lights[" + std::to_string(i) + "].";
+		shader->set_uniform(base + "shadows_enabled", false);
+		shader->set_uniform(base + "shadow_cube", INACTIVE_SHADOW_CUBE_UNIT);
+	}
+
+	// Bind default white textures in inactive units
+	glActiveTexture(GL_TEXTURE0 + INACTIVE_SHADOW_2D_UNIT);
+	glBindTexture(GL_TEXTURE_2D, TextureManager::instance().get_white_texture()->get_id());
+
+	glActiveTexture(GL_TEXTURE0 + INACTIVE_SHADOW_CUBE_UNIT);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, TextureManager::instance().get_white_cubemap()->get_id());
+
 	// Count uniforms
 	shader->set_uniform("num_point_lights", point_index);
 	shader->set_uniform("num_directional_lights", directional_index);
-	shader->set_uniform("num_shadow_maps", shadow_index);
 }

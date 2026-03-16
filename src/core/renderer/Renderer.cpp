@@ -22,7 +22,8 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
 	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
 	shader_mgr.load_program("pbr", { shader_dir + "simple_lighting.vert", shader_dir + "pbr.frag" });
-	shader_mgr.load_program("depth", { shader_dir + "depth.vert", shader_dir + "depth.frag" });
+	shader_mgr.load_program("directional_shadows", { shader_dir + "depth.vert", shader_dir + "depth.frag" });
+	shader_mgr.load_program("point_shadows", { shader_dir + "point_shadow.vert", shader_dir + "point_shadow.geom", shader_dir + "point_shadow.frag" });
 
 	SPDLOG_INFO("Creating main Framebuffer");
 
@@ -204,7 +205,8 @@ void Renderer::terminate()
 	glDeleteProgram(shader_mgr.get_program("lambert")->get_id());
 	glDeleteProgram(shader_mgr.get_program("phong")->get_id());
 	glDeleteProgram(shader_mgr.get_program("pbr")->get_id());
-	glDeleteProgram(shader_mgr.get_program("depth")->get_id());
+	glDeleteProgram(shader_mgr.get_program("directional_shadows")->get_id());
+	glDeleteProgram(shader_mgr.get_program("point_shadows")->get_id());
 
 	// TODO: Check if loaded models buffers are correctly destroyed
 	//glDeleteVertexArrays(1, &cube_VAO);
