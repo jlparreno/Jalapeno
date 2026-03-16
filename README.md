@@ -8,27 +8,29 @@ It’s designed for experiments and real-time graphics research.
 - **Forward Pipeline**
   - At the moment only a simple forward pass has been implemented
   
-- **Models Import**
+- **Models Importation**
   - Support for loading any model supported by Assimp library.
 
 - **Anti-Aliasing**
   - Configurable MSAA
 
-- **Lighting**
-  - Directional Lights
-  - Point Lights
-  - No shadows yet
+- **Lighting & Shadows**
+  - Directional Lights with Shadow Mapping
+  - Point Lights with Shadow Mapping (Cubemaps and Geometry shader)
+  - Support for multiple lights
 
 - **Materials**
   - Lambert Materials
   - Phong Materials
-  - PBR Materials
+  - PBR Materials (Metallic-Roughness)
 
-- **PBR (Metallic-Roughness)**
+- **Built-in Models**
+  - Sphere
 
 ## Screenshots
 
 ![Screenshot](resources/screenshots/screenshot.png)
+![Screenshot](resources/screenshots/screenshot4.png)
 ![Screenshot](resources/screenshots/screenshot2.png)
 ![Screenshot](resources/screenshots/screenshot3.png)
 

@@ -38,13 +38,13 @@ int main()
     }
 
     // MODELS
-    /*Sphere* sphere = scene->add_sphere("sphere1");
+    Sphere* sphere = scene->add_sphere("sphere1");
     if (sphere)
     {
         sphere->set_material(phong_material);
         sphere->set_position(glm::vec3(0.0f, 1.0f, 0.0f));
         sphere->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-    }*/
+    }
 
     Model* sponza = scene->add_model("sponza", static_cast<std::string>(MODELS_DIR) + "Sponza/glTF/Sponza.gltf");
     if (sponza)
@@ -60,22 +60,22 @@ int main()
     //}
 
     // LIGHTS
-    DirectionalLight* sun = scene->add_directional_light(
-        "sun",
-        glm::vec3(0.3f, -1.0f, -0.1f),  // Direction
-        glm::vec3(1.0f, 0.95f, 0.8f),   // Warmer color
-        1.5f                            // Intensity
-    );
-    sun->set_shadows_enabled(true);
+    //DirectionalLight* sun = scene->add_directional_light(
+    //    "sun",
+    //    glm::vec3(0.3f, -1.0f, -0.1f),  // Direction
+    //    glm::vec3(1.0f, 0.95f, 0.8f),   // Warmer color
+    //    1.5f                            // Intensity
+    //);
+    //sun->set_shadows_enabled(true);
 
-    /*PointLight* point1 = scene->add_point_light(
+    PointLight* point1 = scene->add_point_light(
         "point1",
         glm::vec3(5.0f, 5.0f, 0.0f),
         glm::vec3(1.0f),
         1.0f
     );
     point1->set_attenuation(1.0f, 0.09f, 0.032f);
-    point1->set_shadows_enabled(true);*/
+    point1->set_shadows_enabled(true);
 
     /*PointLight* point2 = scene->add_point_light(
         "point2",
