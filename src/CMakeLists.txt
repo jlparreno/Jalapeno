@@ -42,7 +42,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     TEXTURES_DIR="${CMAKE_SOURCE_DIR}/resources/textures/"
     MODELS_DIR="${CMAKE_SOURCE_DIR}/resources/models/"
     SHADERS_DIR="${CMAKE_SOURCE_DIR}/shaders/"
+    FONTS_DIR="${CMAKE_SOURCE_DIR}/resources/fonts/"
     SPDLOG_ACTIVE_LEVEL=${SPDLOG_LEVEL_NUM}
+    GLFW_EXPOSE_NATIVE_WIN32
 )
 
 # Copy Assimp DLL to executable dir

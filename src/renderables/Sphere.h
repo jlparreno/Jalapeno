@@ -28,7 +28,7 @@ public:
      * @param sectors Number of horizontal subdivisions (longitude)
      * @param stacks  Number of vertical subdivisions (latitude)
      */
-    Sphere(float radius = 1.0f, unsigned int sectors = 36, unsigned int stacks = 18);
+    Sphere(const std::string& name, float radius = 1.0f, unsigned int sectors = 36, unsigned int stacks = 18);
 
     /**
      * @brief Returns the sphere mesh

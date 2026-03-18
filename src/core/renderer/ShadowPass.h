@@ -32,7 +32,7 @@ public:
      *
      * @param scene The scene containing the lights and renderables to process
      */
-    void execute(const Scene& scene) override;
+    void execute(Scene& scene) override;
 
     /**
      * @brief Uploads light space matrices to the given shader
@@ -42,7 +42,7 @@ public:
      * @param scene  The scene containing the lights to upload
      * @param shader The shader program to receive the light uniforms
      */
-    void upload_lights(const Scene& scene, ShaderProgram* shader) override;
+    void upload_lights(Scene& scene, ShaderProgram* shader) override;
 
 private:
 

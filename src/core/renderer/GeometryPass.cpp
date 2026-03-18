@@ -1,6 +1,6 @@
 #include "GeometryPass.h"
 
-void GeometryPass::execute(const Scene& scene)
+void GeometryPass::execute(Scene& scene)
 {
 	// Forward rendering: Main Pass
 	Framebuffer* fbo = FramebufferManager::instance().get_framebuffer("main");
@@ -61,14 +61,14 @@ void GeometryPass::execute(const Scene& scene)
 	fbo->unbind();
 }
 
-void GeometryPass::upload_lights(const Scene& scene, ShaderProgram* shader)
+void GeometryPass::upload_lights(Scene& scene, ShaderProgram* shader)
 {
 	int point_index = 0;
 	int directional_index = 0;
 
 	// Point lights are uploaded to the point_lights array and 
 	// directional lights to the directional_lights array
-	for (auto& light : scene.get_scene_lights())
+	for (const auto& light : scene.get_scene_lights())
 	{
 		if (auto* pl = dynamic_cast<PointLight*>(light.get()))
 		{

@@ -1,7 +1,7 @@
 #include "Model.h"
 
 Model::Model(const std::string& name, const std::string& path) :
-    m_name(name), 
+    Renderable(name),
     m_directory("")
 {
     load_model(path);

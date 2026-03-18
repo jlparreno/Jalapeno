@@ -30,8 +30,10 @@ public:
      *
      * Initializes the renderable at the world origin with unit scale
      * and zero rotation.
+     * 
+     * @param name Unique name of the renderable
      */
-    Renderable() = default;
+    Renderable(const std::string& name) : m_name(name) {};
 
     /**
      * @brief Virtual destructor.
@@ -89,6 +91,13 @@ public:
     virtual glm::mat4 get_model_matrix() const;
 
     /**
+     * @brief Returns the name of the renderable
+     *
+     * @return Const reference to the renderable name string
+     */
+    const std::string& get_name() const { return m_name; }
+
+    /**
       * @brief Returns the world-space position of this renderable
       *
       * @return Const reference to the position vector
@@ -111,6 +120,9 @@ public:
 
 protected:
 
+    // Name of the renderable
+    std::string m_name{""};
+    
     // World-space position of this renderable
     glm::vec3 m_position{ 0.0f, 0.0f, 0.0f };
 

@@ -91,9 +91,9 @@ public:
 	/**
 	 * @brief Retrieves a vector containing raw pointers to all renderables in the scene
 	 *
-	 * @return std::vector of const Renderable* containing all renderables in the scene.
+	 * @return std::vector of Renderable* containing all renderables in the scene.
 	 */
-	std::vector<const Renderable*>	get_scene_renderables() const;
+	std::vector<Renderable*>		get_scene_renderables();
 
 	/**
 	 * @brief Retrieves all cameras stored in the scene

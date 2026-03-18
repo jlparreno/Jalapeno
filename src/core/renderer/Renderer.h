@@ -44,7 +44,6 @@ public:
      */
     static Renderer& instance()
     {
-        // Renderer default is 1920x1080
         static Renderer instance("Renderer", SRC_WIDTH, SRC_HEIGHT);
         return instance;
     }
@@ -109,11 +108,11 @@ public:
     void resize(int width, int height);
 
     /**
-     * @brief Assigns the scene to be rendered.
+     * @brief Assigns the scene to be rendered and initializes UI Manager
      *
-     * @param scene Pointer to the Scene object to render.
+     * @param scene Pointer to the Scene object to render
      */
-    void set_scene(Scene* scene) { m_scene = scene; }
+    void set_scene(Scene* scene);
 
     /**
      * @brief Retrieves the currently bound scene.

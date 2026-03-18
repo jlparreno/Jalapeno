@@ -7,6 +7,11 @@
 
 int main()
 {
+    #ifdef _WIN32
+        // Minimize console window on startup
+        ShowWindow(GetConsoleWindow(), SW_MINIMIZE);
+    #endif
+
     // ------------------------------------------------------------------------------
     // INIT LOGGER
     // ------------------------------------------------------------------------------
@@ -21,24 +26,24 @@ int main()
     // ------------------------------------------------------------------------------
     // SCENE SETUP
     // ------------------------------------------------------------------------------
-    Scene* scene = new Scene("main_scene");
+    Scene* scene = new Scene("Main Scene");
 
     // MATERIALS
     auto& material_mgr = MaterialManager::instance();
-    LambertMaterial* lambert_material = material_mgr.add_material<LambertMaterial>("red");
+    LambertMaterial* lambert_material = material_mgr.add_material<LambertMaterial>("Red Lambert");
     if (lambert_material)
     {
         lambert_material->set_diffuse_color(glm::vec3(1.0f, 0.0f, 0.0f));
     }
 
-    PhongMaterial* phong_material = material_mgr.add_material<PhongMaterial>("blue_phong");
+    PhongMaterial* phong_material = material_mgr.add_material<PhongMaterial>("Blue Phong");
     if (phong_material)
     {
         phong_material->set_diffuse_color(glm::vec3(0.0f, 0.0f, 1.0f));
     }
 
     // MODELS
-    Sphere* sphere = scene->add_sphere("sphere1");
+    Sphere* sphere = scene->add_sphere("Sphere");
     if (sphere)
     {
         sphere->set_material(phong_material);
@@ -46,22 +51,15 @@ int main()
         sphere->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
     }
 
-    Model* sponza = scene->add_model("sponza", static_cast<std::string>(MODELS_DIR) + "Sponza/glTF/Sponza.gltf");
+    Model* sponza = scene->add_model("Sponza", static_cast<std::string>(MODELS_DIR) + "Sponza/glTF/Sponza.gltf");
     if (sponza)
     {
         sponza->set_scale(glm::vec3(0.01f, 0.01f, 0.01f));	// it's a bit too big for our scene, so scale it down
     }
 
-    //Renderable* backpack = scene->add_model("backpack", static_cast<std::string>(MODELS_DIR) + "backpack/backpack.obj");
-    //if (backpack)C:\dev\Jalapeno\include\types.h
-    //{
-    //    backpack->set_position(glm::vec3(0.0f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
-    //    backpack->set_scale(glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
-    //}
-
     // LIGHTS
     //DirectionalLight* sun = scene->add_directional_light(
-    //    "sun",
+    //    "Sun Light",
     //    glm::vec3(0.3f, -1.0f, -0.1f),  // Direction
     //    glm::vec3(1.0f, 0.95f, 0.8f),   // Warmer color
     //    1.5f                            // Intensity
@@ -69,7 +67,7 @@ int main()
     //sun->set_shadows_enabled(true);
 
     PointLight* point1 = scene->add_point_light(
-        "point1",
+        "Point Light",
         glm::vec3(5.0f, 5.0f, 0.0f),
         glm::vec3(1.0f),
         1.0f

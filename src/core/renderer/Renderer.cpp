@@ -41,6 +41,17 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	};
 	framebuffer_mgr.create_framebuffer("main", main_spec);
 
+	// MSAA resolver buffer
+	FramebufferSpec resolve_spec;
+	resolve_spec.width = SRC_WIDTH;
+	resolve_spec.height = SRC_HEIGHT;
+	resolve_spec.samples = 1;
+	resolve_spec.resizable = true;
+	resolve_spec.attachments = {
+		{ GL_RGBA16F, GL_COLOR_ATTACHMENT0 }
+	};
+	FramebufferManager::instance().create_framebuffer("resolve", resolve_spec);
+
 	// Create render passes (IN ORDER!)
 	add_render_pass<ShadowPass>();
 	add_render_pass<GeometryPass>();
@@ -59,9 +70,6 @@ void Renderer::run()
 		delta_time = currentFrame - last_frame;
 		last_frame = currentFrame;
 
-		// Display FPS and frame time in window title
-		display_frame_times();
-
 		// Process input events
 		InputManager::instance().process_input(m_window);
 
@@ -69,8 +77,8 @@ void Renderer::run()
 		render_scene();
 
 		// Update and render UI
-		UIManager::update();
-		UIManager::render();
+		UIManager::instance().update();
+		UIManager::instance().render();
 
 		// Prepare next frame
 		glfwSwapBuffers(m_window);
@@ -89,6 +97,7 @@ void Renderer::init()
 		SPDLOG_ERROR("Failed GLFW initialization");
 	}
 
+	glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // remove Window bar
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -101,6 +110,14 @@ void Renderer::init()
 		SPDLOG_ERROR("Failed to create GLFW window");
 		glfwTerminate();
 	}
+
+	// Center window in monitor
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+	int pos_x = (mode->width - m_width) / 2;
+	int pos_y = (mode->height - m_height) / 2;
+	glfwSetWindowPos(m_window, pos_x, pos_y);
 
 	// Load render engine icon for GLFW window
 	int icon_width, icon_height, icon_channels;
@@ -121,11 +138,11 @@ void Renderer::init()
 	glfwMakeContextCurrent(m_window);
 	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-	// TODO: Support V-Sync
-	// glfwSwapInterval(1);
+	// V-Sync disabled
+	glfwSwapInterval(0);
 
 	// Init UI
-	UIManager::init(m_window);
+	UIManager::instance().init(m_window);
 
 	// Init Input Manager
 	InputManager::instance().init(m_window);
@@ -153,20 +170,18 @@ void Renderer::render_scene()
 		pass->execute(*m_scene);
 	}
 
-	// Blit to GLFW default FBO
+	// Blit MSAA → resolve FBO (resolve will be rendered in ImGUI viewport)
 	Framebuffer* main_fbo = FramebufferManager::instance().get_framebuffer("main");
+	Framebuffer* resolve_fbo = FramebufferManager::instance().get_framebuffer("resolve");
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, main_fbo->get_ID());
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, resolve_fbo->get_ID());
 
-	glViewport(0, 0, m_width, m_height);
-	
-	// Blit operation (only color at the moment). If our FBO is multi-sampled, this vlit will resolve into the GLFW FBO (no MS)
-	glBlitFramebuffer(0, 0, main_fbo->get_width(), main_fbo->get_height(), 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, main_fbo->get_width(), main_fbo->get_height(),
+				      0, 0, resolve_fbo->get_width(), resolve_fbo->get_height(),
+					  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-	// Unbind
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::resize(int width, int height)
@@ -176,6 +191,14 @@ void Renderer::resize(int width, int height)
 
 	//Update framebuffers size
 	FramebufferManager::instance().resize_all(width, height);
+}
+
+void Renderer::set_scene(Scene* scene)
+{ 
+	m_scene = scene; 
+
+	// Set scene to UI Manager
+	UIManager::instance().set_scene(scene);
 }
 
 void Renderer::display_frame_times()
@@ -214,6 +237,6 @@ void Renderer::terminate()
 	//glDeleteBuffers(1, &VBO);
 
 	// Terminate UI and GLFW
-	UIManager::terminate();
+	UIManager::instance().terminate();
 	glfwTerminate();
 }

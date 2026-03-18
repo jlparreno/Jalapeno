@@ -30,7 +30,7 @@ public:
      *
      * @param scene The scene containing all renderables and lights to process
      */
-    virtual void execute(const Scene& scene) = 0;
+    virtual void execute(Scene& scene) = 0;
 
     /**
      * @brief Uploads all scene lights as uniforms to the given shader
@@ -40,5 +40,5 @@ public:
      * @param scene  The scene containing the lights to upload
      * @param shader The shader program to upload the light uniforms to
      */
-    virtual void upload_lights(const Scene& scene, ShaderProgram* shader) = 0;
+    virtual void upload_lights(Scene& scene, ShaderProgram* shader) = 0;
 };

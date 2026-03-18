@@ -1,8 +1,8 @@
 #pragma once
 
 // Window / viewport dimensions
-constexpr int SRC_WIDTH = 1920;
-constexpr int SRC_HEIGHT = 1080;
+constexpr int SRC_WIDTH = 2400;
+constexpr int SRC_HEIGHT = 1200;
 
 // Aspect ratio limits
 constexpr float MIN_ASPECT = 4.0f / 3.0f;

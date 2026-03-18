@@ -13,7 +13,7 @@ ShadowPass::ShadowPass()
         SPDLOG_WARN("No point shadows shader available for Shadow Pass");
 }
 
-void ShadowPass::execute(const Scene& scene)
+void ShadowPass::execute(Scene& scene)
 {
     // Enable front face culling to avoid Peter panning
     glCullFace(GL_FRONT);
@@ -36,7 +36,7 @@ void ShadowPass::execute(const Scene& scene)
             m_directional_shadows_shader->bind();
             m_directional_shadows_shader->set_uniform("light_matrix", dl->get_light_space_matrix());
 
-            for (auto& renderable : scene.get_scene_renderables())
+            for (const auto& renderable : scene.get_scene_renderables())
             {
                 m_directional_shadows_shader->set_uniform("model", renderable->get_model_matrix());
                 renderable->draw_geometry();
@@ -58,7 +58,7 @@ void ShadowPass::execute(const Scene& scene)
             m_point_shadows_shader->set_uniform("light_pos", pl->get_position());
             m_point_shadows_shader->set_uniform("far_plane", pl->get_far_plane());
 
-            for (auto& renderable : scene.get_scene_renderables())
+            for (const auto& renderable : scene.get_scene_renderables())
             {
                 m_point_shadows_shader->set_uniform("model", renderable->get_model_matrix());
                 renderable->draw_geometry();
@@ -72,7 +72,7 @@ void ShadowPass::execute(const Scene& scene)
     glCullFace(GL_BACK);
 }
 
-void ShadowPass::upload_lights(const Scene& scene, ShaderProgram* shader)
+void ShadowPass::upload_lights(Scene& scene, ShaderProgram* shader)
 {
     // No lights data needed in this pass, only matrices
 }

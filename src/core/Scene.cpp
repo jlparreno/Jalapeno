@@ -22,7 +22,7 @@ Model* Scene::add_model(const std::string& name, const std::string& path)
 
 Sphere* Scene::add_sphere(const std::string& name)
 {
-	auto sphere = std::make_unique<Sphere>();
+	auto sphere = std::make_unique<Sphere>(name);
 
 	Sphere* ptr = sphere.get();
 	m_renderables[name] = std::move(sphere);
@@ -56,12 +56,12 @@ DirectionalLight* Scene::add_directional_light(const std::string& name, const gl
 	return ptr;
 }
 
-std::vector<const Renderable*> Scene::get_scene_renderables() const
+std::vector<Renderable*> Scene::get_scene_renderables()
 {
-	std::vector<const Renderable*> result;
+	std::vector<Renderable*> result;
 	result.reserve(m_renderables.size());
 
-	for (const auto& [name, renderable] : m_renderables)
+	for (auto& [name, renderable] : m_renderables)
 	{
 		result.push_back(renderable.get());
 	}

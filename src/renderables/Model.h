@@ -116,9 +116,6 @@ private:
     void load_material_textures(aiMaterial* mat, const std::string& material_name, aiTextureType type, const std::string& type_name, bool vertical_flip = false);
 
     // MODEL DATA
-
-    // Model name
-    std::string           m_name;
     
     // Directory path of the model file
     std::string           m_directory;

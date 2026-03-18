@@ -34,7 +34,7 @@ public:
      *
      * @param scene The scene containing all renderables and lights to render
      */
-    void execute(const Scene& scene) override;
+    void execute(Scene& scene) override;
 
     /**
      * @brief Uploads all scene lights as uniforms to the given shader
@@ -46,5 +46,5 @@ public:
      * @param scene  The scene containing the lights to upload
      * @param shader The shader program to receive the light uniforms
      */
-    void upload_lights(const Scene& scene, ShaderProgram* shader) override;
+    void upload_lights(Scene& scene, ShaderProgram* shader) override;
 };

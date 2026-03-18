@@ -1,6 +1,7 @@
 #include "Sphere.h"
 
-Sphere::Sphere(float radius, unsigned int sectors, unsigned int stacks)
+Sphere::Sphere(const std::string& name, float radius, unsigned int sectors, unsigned int stacks) :
+    Renderable(name)
 {
     // Automatically call to geometry generation with provided parameters
     generate(radius, sectors, stacks);
