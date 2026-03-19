@@ -36,7 +36,7 @@ It’s designed for experiments and real-time graphics research.
 
 ## Screenshots
 
-![Screenshot](resources/screenshots/screenshot5.png)
+![Screenshot](resources/screenshots/screenshot5.PNG)
 ![Screenshot](resources/screenshots/screenshot.png)
 ![Screenshot](resources/screenshots/screenshot4.png)
 ![Screenshot](resources/screenshots/screenshot2.png)
