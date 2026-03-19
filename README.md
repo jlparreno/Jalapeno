@@ -27,8 +27,16 @@ It’s designed for experiments and real-time graphics research.
 - **Built-in Models**
   - Sphere
 
+- **User Interface**
+  - Custom dark-themed ImGUI user interface
+  - Hierarchy panel with scene information and selectable objects
+  - Properties panel to edit the selected object
+  - Materials panel with the list of all materials loaded and textures
+  - Console panel that outputs spdlog messages
+
 ## Screenshots
 
+![Screenshot](resources/screenshots/screenshot5.png)
 ![Screenshot](resources/screenshots/screenshot.png)
 ![Screenshot](resources/screenshots/screenshot4.png)
 ![Screenshot](resources/screenshots/screenshot2.png)
