@@ -91,6 +91,15 @@ public:
     void set_uniform(const std::string& name, glm::vec3 value) const;
 
     /**
+     * @brief Sets a matrix 3x3 uniform variable in the shader
+     *
+     * @param name Name of the uniform variable
+     * @param value Matrix value to set
+     * @param transpose Optional value to transpose the matrix. False by default as GLM uses colum-major ordering.
+     */
+    void set_uniform(const std::string& name, glm::mat3 value, bool transpose = false) const;
+
+    /**
      * @brief Sets a matrix 4x4 uniform variable in the shader
      *
      * @param name Name of the uniform variable

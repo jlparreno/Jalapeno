@@ -34,6 +34,7 @@ void GeometryPass::execute(Scene& scene)
 	for (const Renderable* renderable : scene.get_scene_renderables())
 	{
 		glm::mat4 model = renderable->get_model_matrix();
+		glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(model))); // Calculate in CPU and pass to the shader as uniform (cheaper)
 
 		for (auto& mesh : renderable->get_meshes())
 		{
@@ -46,6 +47,7 @@ void GeometryPass::execute(Scene& scene)
 			shader->set_uniform("model", model);
 			shader->set_uniform("view", view_mat);
 			shader->set_uniform("projection", projection_mat);
+			shader->set_uniform("normal_matrix", normal_matrix);
 			shader->set_uniform("view_pos", camera->get_position());
 
 			//Upload lights data to the shader

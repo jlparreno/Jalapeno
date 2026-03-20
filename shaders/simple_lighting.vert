@@ -9,6 +9,7 @@ layout (location = 4) in vec3 aBitangent;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat3 normal_matrix;
 
 out vec3 Normal;
 out vec3 FragPos;
@@ -16,7 +17,6 @@ out vec2 TexCoords;
 
 void main()
 {
-    mat3 normal_matrix = mat3(transpose(inverse(model)));
     Normal = normal_matrix * aNormal;
 
     FragPos = vec3(model * vec4(aPos, 1.0));
