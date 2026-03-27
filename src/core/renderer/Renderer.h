@@ -12,6 +12,7 @@
 #include "UIManager.h"
 #include "ShadowPass.h"
 #include "GeometryPass.h"
+#include "SkyboxPass.h"
 #include "config.h"
 
 #include <string>

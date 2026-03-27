@@ -46,6 +46,16 @@ public:
     bool load_image(const std::string& path, bool vertical_flip = false, bool generate_mipmaps = true);
 
     /**
+     * @brief Loads an HDR texture from an image file using stb_image
+     *
+     * @param path Path to the HDR image file
+     * @param vertical_flip
+     *
+     * @return True on successful load, false otherwise.
+     */
+    bool load_hdr_image(const std::string& path, bool vertical_flip = false);
+
+    /**
      * @brief Loads a cubemap texture from an image file using stb_image
      *
      * @param paths Vector with all the path to the image files

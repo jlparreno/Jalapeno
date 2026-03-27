@@ -17,8 +17,6 @@ void Framebuffer::create()
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-    auto texture_target = m_spec.samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
-
     for (const auto& attachment : m_spec.attachments)
     {
         create_attachment(attachment);
@@ -186,7 +184,8 @@ void Framebuffer::bind_depth_as_texture(int slot) const
 void Framebuffer::bind_color_as_texture(int index, int slot) const
 {
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, get_color_attachment(index));
+    GLenum target = m_spec.is_cubemap ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
+    glBindTexture(target, get_color_attachment(index));
 }
 
 void Framebuffer::unbind()

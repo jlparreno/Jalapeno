@@ -64,6 +64,31 @@ Texture* TextureManager::load_texture(const std::string& name, const std::string
     return m_textures[name].get();
 }
 
+Texture* TextureManager::load_hdr_texture(const std::string& name, const std::string& path, bool vertical_flip)
+{
+    // If it exists, return the previously loaded texture
+    if (exists(name))
+    {
+        return m_textures[name].get();
+    }
+
+    // Otherwise, generate the new texture and load the image from disk
+    auto tex = std::make_unique<Texture>();
+    if (!tex->load_hdr_image(path, vertical_flip))
+    {
+        SPDLOG_ERROR("Failed to load HDR texture: {}", path);
+        return nullptr;
+    }
+
+    // Move data to the manager array
+    m_textures[name] = std::move(tex);
+
+    SPDLOG_INFO("New HDR texture loaded: {}", name);
+
+    // Return the pointer to the new texture
+    return m_textures[name].get();
+}
+
 Texture* TextureManager::load_cubemap(const std::string& name, const std::vector<std::string>& paths, bool vertical_flip, bool generate_mipmaps)
 {
     // If it exists, return the previously loaded cubemap texture
@@ -99,4 +124,16 @@ Texture* TextureManager::get_texture(const std::string& name)
     }
 
     return nullptr;
+}
+
+void TextureManager::remove_texture(const std::string& name)
+{
+    auto it = m_textures.find(name);
+    if (it == m_textures.end())
+    {
+        SPDLOG_WARN("Cannot delete texture. Texture '{}' not found", name);
+        return;
+    }
+
+    m_textures.erase(it);
 }

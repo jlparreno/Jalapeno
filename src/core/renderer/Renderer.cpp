@@ -22,13 +22,17 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
 	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
 	shader_mgr.load_program("pbr", { shader_dir + "simple_lighting.vert", shader_dir + "pbr.frag" });
+	
 	shader_mgr.load_program("directional_shadows", { shader_dir + "depth.vert", shader_dir + "depth.frag" });
 	shader_mgr.load_program("point_shadows", { shader_dir + "point_shadow.vert", shader_dir + "point_shadow.geom", shader_dir + "point_shadow.frag" });
-
-	SPDLOG_INFO("Creating main Framebuffer");
+	
+	shader_mgr.load_program("skybox", { shader_dir + "skybox.vert", shader_dir + "skybox.frag" });
+	shader_mgr.load_program("equirect_to_cubemap", { shader_dir + "equirect_to_cubemap.vert", shader_dir + "cubemap_capture.geom", shader_dir + "equirect_to_cubemap.frag" });
 
 	// Create needed framebuffers
 	auto& framebuffer_mgr = FramebufferManager::instance();
+
+	SPDLOG_INFO("Creating main Framebuffer");
 
 	// Main FBO
 	FramebufferSpec main_spec;
@@ -40,6 +44,8 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 		{ GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT }
 	};
 	framebuffer_mgr.create_framebuffer("main", main_spec);
+
+	SPDLOG_INFO("Creating MSAA resolve Framebuffer");
 
 	// MSAA resolver buffer
 	FramebufferSpec resolve_spec;
@@ -55,6 +61,7 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	// Create render passes (IN ORDER!)
 	add_render_pass<ShadowPass>();
 	add_render_pass<GeometryPass>();
+	add_render_pass<SkyboxPass>()->load_from_hdr(static_cast<std::string>(TEXTURES_DIR) + "venice_sunset_2k.hdr");
 }
 
 void Renderer::run()
@@ -101,7 +108,7 @@ void Renderer::init()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+	
 	// GLFW window creation
 	m_window = glfwCreateWindow(m_width, m_height, "Jalapeno", NULL, NULL);
 
@@ -141,17 +148,17 @@ void Renderer::init()
 	// V-Sync disabled
 	glfwSwapInterval(0);
 
-	// Init UI
-	UIManager::instance().init(m_window);
-
-	// Init Input Manager
-	InputManager::instance().init(m_window);
-
 	// GLAD: load all OpenGL function pointers
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		SPDLOG_ERROR("Failed to initialize GLAD");
 	}
+
+	// Init UI
+	UIManager::instance().init(m_window);
+
+	// Init Input Manager
+	InputManager::instance().init(m_window);
 }
 
 void Renderer::render_scene()
@@ -230,6 +237,8 @@ void Renderer::terminate()
 	glDeleteProgram(shader_mgr.get_program("pbr")->get_id());
 	glDeleteProgram(shader_mgr.get_program("directional_shadows")->get_id());
 	glDeleteProgram(shader_mgr.get_program("point_shadows")->get_id());
+	glDeleteProgram(shader_mgr.get_program("equirect_to_cubemap")->get_id());
+	glDeleteProgram(shader_mgr.get_program("skybox")->get_id());
 
 	// TODO: Check if loaded models buffers are correctly destroyed
 	//glDeleteVertexArrays(1, &cube_VAO);

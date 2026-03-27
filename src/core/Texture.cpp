@@ -35,7 +35,6 @@ bool Texture::load_image(const std::string& path, bool vertical_flip, bool gener
     // Select format depending on channels number
     GLenum format = (m_channels == 4) ? GL_RGBA : GL_RGB;
 
-    
     glBindTexture(GL_TEXTURE_2D, m_id);
     glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), m_width, m_height, 0, format, GL_UNSIGNED_BYTE, data);
 
@@ -52,6 +51,38 @@ bool Texture::load_image(const std::string& path, bool vertical_flip, bool gener
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Free stb loaded data
+    stbi_image_free(data);
+
+    return true;
+}
+
+bool Texture::load_hdr_image(const std::string& path, bool vertical_flip)
+{
+    stbi_set_flip_vertically_on_load(vertical_flip);
+
+    // stbi_loadf for HDR images
+    float* data = stbi_loadf(path.c_str(), &m_width, &m_height, &m_channels, 0);
+
+    if (!data)
+    {
+        SPDLOG_ERROR("Failed to load HDR: {}: {}", path, stbi_failure_reason());
+        return false;
+    }
+
+    // Set texture path variable
+    m_path = path;
+
+    // Select format depending on channels number
+    GLenum format = (m_channels == 4) ? GL_RGBA : GL_RGB;
+
+    glBindTexture(GL_TEXTURE_2D, m_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_width, m_height, 0, format, GL_FLOAT, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     stbi_image_free(data);
 
     return true;

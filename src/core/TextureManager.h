@@ -79,6 +79,19 @@ public:
      */
     Texture* load_texture(const std::string& name, const std::string& path, bool vertical_flip = false, bool generate_mipmaps = true);
 
+    /**
+     * @brief Loads an HDR texture from disk if it is not already loaded
+     *
+     * This function uses stbi_loadf to support HDR format. The original purpose is
+     * to load environment maps for IBL, but can be used for any HDR texture.
+     * 
+     * @param name Unique name to identify the texture
+     * @param path File path to the texture image
+     * @param vertical_flip Optional parameter to flip the texture vertically. Default is false.
+     *
+     * @return Pointer to the loaded Texture object. Returns nullptr if loading failed.
+     */
+    Texture* load_hdr_texture(const std::string& name, const std::string& path, bool vertical_flip = false);
 
     /**
      * @brief Loads a cubemap texture from disk if it is not already loaded
@@ -142,6 +155,17 @@ public:
      * @return Raw pointer to the white fallback cubemap Texture
      */
     Texture* get_white_cubemap() const { return m_white_cubemap.get(); }
+
+    /**
+     * @brief Deletes a texture from the manager and releases its GPU resources
+     *
+     * Removes the texture identified by the given name from the internal map
+     * and deletes the associated OpenGL texture object. If the name is not found,
+     * logs a warning and does nothing.
+     *
+     * @param name Unique identifier of the texture to remove.
+     */
+    void remove_texture(const std::string& name);
 
 private:
 

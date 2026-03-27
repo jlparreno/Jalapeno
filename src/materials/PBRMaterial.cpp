@@ -26,9 +26,9 @@ void PBRMaterial::apply_uniforms(ShaderProgram* shader) const
 
 void PBRMaterial::bind_textures(ShaderProgram* shader) const
 {
-    bind_texture_or_white("albedo_tex", 0, shader);
-    bind_texture_or_white("metallic_roughness_tex", 1, shader);
-    bind_texture_or_white("normal_tex", 2, shader);
+    bind_texture_or_white("albedo_tex", ALBEDO_TEX_UNIT, shader);
+    bind_texture_or_white("metallic_roughness_tex", METALLIC_ROUGHNESS_TEX_UNIT, shader);
+    bind_texture_or_white("normal_tex", NORMAL_TEX_UNIT, shader);
 
     // Set uniform flag to use normal textures or not
     shader->set_uniform("material.use_normal_map", m_textures.count("normal_tex") > 0);
