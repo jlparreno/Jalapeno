@@ -79,10 +79,19 @@ public:
      * @param name Name of the shader program to check
      * @return true if the shader program exists, false otherwise
      */
-    bool exists(const std::string& name) const 
+    bool exists(const std::string& name) const
     {
         return m_programs.find(name) != m_programs.end();
     }
+
+    /**
+     * @brief Destroys all loaded shader programs and releases their GPU resources.
+     *
+     * Must be called while the OpenGL context is still valid (before glfwTerminate).
+     * After this call, all ShaderProgram pointers previously returned by this manager
+     * are invalid.
+     */
+    void clear() { m_programs.clear(); }
 
 private:
 

@@ -177,10 +177,14 @@ private:
     ~Renderer() = default;
 
     /**
-     * @brief Initializes GLFW, GLAD, the main window, the UI Manager,
-     * shaders, and framebuffers.
+     * @brief Initializes GLFW, GLAD, the main window and the UI Manager.
      */
     void init();
+
+    /**
+     * @brief Compiles and registers all shader programs used by the engine.
+     */
+    void init_shaders();
 
     /**
      * @brief Renders the active scene.

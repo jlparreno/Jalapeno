@@ -10,25 +10,11 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	m_width(width),
 	m_height(height)
 {
-	//Renderer initialization
+	// Renderer initialization
 	init();
 
-	SPDLOG_INFO("Compiling shaders...");
-	
-	//TODO: Put this in the correct place for initialization (maybe configuration can tell which shaders to load and size of framebuffer)
-	// Create and compile needed shaders
-	auto& shader_mgr = ShaderManager::instance();
-	std::string shader_dir = static_cast<std::string>(SHADERS_DIR);
-
-	shader_mgr.load_program("lambert", { shader_dir + "simple_lighting.vert", shader_dir + "lambert.frag" });
-	shader_mgr.load_program("phong", { shader_dir + "simple_lighting.vert", shader_dir + "phong.frag" });
-	shader_mgr.load_program("pbr", { shader_dir + "simple_lighting.vert", shader_dir + "pbr.frag" });
-	
-	shader_mgr.load_program("directional_shadows", { shader_dir + "depth.vert", shader_dir + "depth.frag" });
-	shader_mgr.load_program("point_shadows", { shader_dir + "point_shadow.vert", shader_dir + "point_shadow.geom", shader_dir + "point_shadow.frag" });
-	
-	shader_mgr.load_program("skybox", { shader_dir + "skybox.vert", shader_dir + "skybox.frag" });
-	shader_mgr.load_program("equirect_to_cubemap", { shader_dir + "equirect_to_cubemap.vert", shader_dir + "cubemap_capture.geom", shader_dir + "equirect_to_cubemap.frag" });
+	// Init shaders
+	init_shaders();
 
 	// Create needed framebuffers
 	auto& framebuffer_mgr = FramebufferManager::instance();
@@ -241,23 +227,33 @@ void Renderer::display_frame_times()
 
 void Renderer::terminate()
 {
-	auto& shader_mgr = ShaderManager::instance();
-	glDeleteProgram(shader_mgr.get_program("lambert")->get_id());
-	glDeleteProgram(shader_mgr.get_program("phong")->get_id());
-	glDeleteProgram(shader_mgr.get_program("pbr")->get_id());
-	glDeleteProgram(shader_mgr.get_program("directional_shadows")->get_id());
-	glDeleteProgram(shader_mgr.get_program("point_shadows")->get_id());
-	glDeleteProgram(shader_mgr.get_program("equirect_to_cubemap")->get_id());
-	glDeleteProgram(shader_mgr.get_program("skybox")->get_id());
-
-	// TODO: Check if loaded models buffers are correctly destroyed
-	//glDeleteVertexArrays(1, &cube_VAO);
-	//glDeleteVertexArrays(1, &light_VAO);
-	//glDeleteBuffers(1, &VBO);
+	// Release all GPU shader programs before destroying the OpenGL context
+	ShaderManager::instance().clear();
 
 	// Terminate UI and GLFW
 	UIManager::instance().terminate();
 	glfwTerminate();
+}
+
+void Renderer::init_shaders()
+{
+	SPDLOG_INFO("Compiling shaders...");
+
+	auto& shader_mgr = ShaderManager::instance();
+	const std::string shaders_dir = static_cast<std::string>(SHADERS_DIR);
+
+	// Lighting
+	shader_mgr.load_program("lambert",  { shaders_dir + "simple_lighting.vert", shaders_dir + "lambert.frag" });
+	shader_mgr.load_program("phong",	{ shaders_dir + "simple_lighting.vert", shaders_dir + "phong.frag"	 });
+	shader_mgr.load_program("pbr",		{ shaders_dir + "simple_lighting.vert", shaders_dir + "pbr.frag"	 });
+
+	// Shadows
+	shader_mgr.load_program("directional_shadows",	{ shaders_dir + "depth.vert",        shaders_dir + "depth.frag" });
+	shader_mgr.load_program("point_shadows",		{ shaders_dir + "point_shadow.vert", shaders_dir + "point_shadow.geom", shaders_dir + "point_shadow.frag" });
+
+	// Skybox / environment
+	shader_mgr.load_program("skybox",              { shaders_dir + "skybox.vert",				shaders_dir + "skybox.frag" });
+	shader_mgr.load_program("equirect_to_cubemap", { shaders_dir + "equirect_to_cubemap.vert",	shaders_dir + "cubemap_capture.geom", shaders_dir + "equirect_to_cubemap.frag" });
 }
 
 void Renderer::set_vsync(bool enabled)

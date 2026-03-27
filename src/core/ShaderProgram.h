@@ -30,6 +30,11 @@ public:
     ShaderProgram() = default;
 
     /**
+     * @brief Destructor — releases the OpenGL shader program object
+     */
+    ~ShaderProgram() { if (m_id) glDeleteProgram(m_id); }
+
+    /**
      * @brief Adds a shader stage to the program from a GLSL file
      *
      * The shader is stored internally and will be compiled and linked later
