@@ -147,6 +147,7 @@ void Renderer::init()
 	icon.pixels = icon_pixels;
 
 	glfwSetWindowIcon(m_window, 1, &icon);
+	stbi_image_free(icon_pixels);
 
 	glfwMakeContextCurrent(m_window);
 	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

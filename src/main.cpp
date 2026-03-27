@@ -50,7 +50,7 @@ int main()
     // ------------------------------------------------------------------------------
     // SCENE SETUP
     // ------------------------------------------------------------------------------
-    Scene* scene = new Scene("Main Scene");
+    auto scene = std::make_unique<Scene>("Main Scene");
 
     // MODELS
    /* Sphere* sphere = scene->add_sphere("Sphere 1");
@@ -88,7 +88,7 @@ int main()
     // ------------------------------------------------------------------------------
     // RENDER LOOP
     // ------------------------------------------------------------------------------
-    renderer.set_scene(scene);
+    renderer.set_scene(scene.get());
     renderer.run();
 
     SPDLOG_INFO("Closing engine...");

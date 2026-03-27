@@ -148,13 +148,26 @@ private:
     std::string load_file(ShaderType type, const std::string& path);
 
 
+    /**
+     * @brief Returns the location of a uniform variable, caching the result.
+     *
+     * On first call for a given name, queries OpenGL and stores the result.
+     * Subsequent calls return the cached value directly.
+     *
+     * @param name Name of the uniform variable
+     * @return GLint location, or -1 if not found
+     */
+    GLint get_uniform_location(const std::string& name) const;
+
     // OpenGL handle of the linked shader program
     unsigned int m_id{ 0 };
 
     // Stores the individual shader IDs by stage type for linking
     std::unordered_map<ShaderType, unsigned int> m_program_stages;
-    
 
+    // Cache of uniform name → location to avoid repeated glGetUniformLocation calls
+    mutable std::unordered_map<std::string, GLint> m_uniform_cache;
+    
     // Map from extension to OpenGL shader type
     inline static const std::unordered_map<std::string, ShaderType> s_extension_to_type
     {

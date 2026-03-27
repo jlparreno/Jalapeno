@@ -112,37 +112,52 @@ bool ShaderProgram::link_program()
         glDeleteShader(shaderID);
 
     m_program_stages.clear();
+    m_uniform_cache.clear();
     return true;
+}
+
+GLint ShaderProgram::get_uniform_location(const std::string& name) const
+{
+    auto it = m_uniform_cache.find(name);
+    if (it != m_uniform_cache.end())
+        return it->second;
+
+    GLint loc = glGetUniformLocation(m_id, name.c_str());
+    if (loc == -1)
+        SPDLOG_WARN("Uniform '{}' not found in shader program {}", name, m_id);
+
+    m_uniform_cache[name] = loc;
+    return loc;
 }
 
 void ShaderProgram::set_uniform(const std::string& name, bool value) const
 {
-    glUniform1i(glGetUniformLocation(m_id, name.c_str()), (int)value);
+    glUniform1i(get_uniform_location(name), (int)value);
 }
 
 void ShaderProgram::set_uniform(const std::string& name, int value) const
 {
-    glUniform1i(glGetUniformLocation(m_id, name.c_str()), value);
+    glUniform1i(get_uniform_location(name), value);
 }
 
 void ShaderProgram::set_uniform(const std::string& name, float value) const
 {
-    glUniform1f(glGetUniformLocation(m_id, name.c_str()), value);
+    glUniform1f(get_uniform_location(name), value);
 }
 
 void ShaderProgram::set_uniform(const std::string& name, glm::vec3 value) const
 {
-    glUniform3f(glGetUniformLocation(m_id, name.c_str()), value.x, value.y, value.z);
+    glUniform3f(get_uniform_location(name), value.x, value.y, value.z);
 }
 
 void ShaderProgram::set_uniform(const std::string& name, glm::mat3 value, bool transpose) const
 {
-    glUniformMatrix3fv(glGetUniformLocation(m_id, name.c_str()), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix3fv(get_uniform_location(name), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
 }
 
 void ShaderProgram::set_uniform(const std::string& name, glm::mat4 value, bool transpose) const
 {
-    glUniformMatrix4fv(glGetUniformLocation(m_id, name.c_str()), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix4fv(get_uniform_location(name), 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
 }
 
 void ShaderProgram::bind() const 

@@ -25,6 +25,13 @@ void GeometryPass::execute(Scene& scene)
 
 	// Setup matrices with scene camera
 	Camera* camera = scene.get_active_camera();
+	if (!camera)
+	{
+		SPDLOG_ERROR("No active camera in scene");
+		fbo->unbind();
+		return;
+	}
+
 	float aspect = glm::clamp((float)fbo->get_width() / (float)fbo->get_height(), MIN_ASPECT, MAX_ASPECT);
 
 	glm::mat4 view_mat = camera->get_view_matrix();
@@ -39,6 +46,12 @@ void GeometryPass::execute(Scene& scene)
 		for (auto& mesh : renderable->get_meshes())
 		{
 			Material* material = mesh.get_material();
+			if (!material)
+			{
+				SPDLOG_WARN("Mesh has no material, skipping draw");
+				continue;
+			}
+
 			ShaderProgram* shader = material->get_shader();
 
 			shader->bind();

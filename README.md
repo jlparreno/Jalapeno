@@ -1,38 +1,46 @@
 # Jalapeno
 
-`Jalapeno` is a render engine built on OpenGL from scratch. It is in very early development stage, still a lot to do.
-It’s designed for experiments and real-time graphics research.
+`Jalapeno` is a real-time render engine built on OpenGL from scratch, designed for graphics experiments and research.
 
 ## Features
 
-- **Forward Pipeline**
-  - At the moment only a simple forward pass has been implemented
-  
-- **Models Importation**
-  - Support for loading any model supported by Assimp library.
+### Rendering Pipeline
+- Forward rendering pipeline with configurable render passes
+- Render passes: Shadow, Geometry and Skybox
+- Configurable MSAA
 
-- **Anti-Aliasing**
-  - Configurable MSAA
+### Skybox & Environment
+- HDR skybox from equirectangular images
+- Equirectangular-to-cubemap conversion pass
 
-- **Lighting & Shadows**
-  - Directional Lights with Shadow Mapping
-  - Point Lights with Shadow Mapping (Cubemaps and Geometry shader)
-  - Support for multiple lights
+### Lighting & Shadows
+- Directional lights with PCF shadow mapping
+- Point lights with omnidirectional shadow mapping
+- Support for multiple lights (up to 2 directional, 4 point lights)
 
-- **Materials**
-  - Lambert Materials
-  - Phong Materials
-  - PBR Materials (Metallic-Roughness)
+### Materials
+- Lambert (diffuse only)
+- Phong (diffuse + specular)
+- PBR Metallic-Roughness
+  - Cook-Torrance BRDF (GGX NDF, Smith geometry, Schlick Fresnel)
+  - Albedo, metallic-roughness and normal map textures
+  - ACES tone mapping + gamma correction
 
-- **Built-in Models**
-  - Sphere
+### Model & Geometry Support
+- Load any model format supported by Assimp (glTF, OBJ, FBX, etc.)
+- Built-in primitives: Sphere, Cube, Quad
 
-- **User Interface**
-  - Custom dark-themed ImGUI user interface
-  - Hierarchy panel with scene information and selectable objects
-  - Properties panel to edit the selected object
-  - Materials panel with the list of all materials loaded and textures
-  - Console panel that outputs spdlog messages
+### User Interface
+- Custom dark-themed ImGui interface
+- Hierarchy panel — scene objects list with selection
+- Materials panel — all loaded materials and their textures, with selection
+- Properties panel — transform and material editing for selected object
+- Console panel — live spdlog output
+- Render Settings panel — MSAA, skybox toggle, wireframe, VSync
+
+### Architecture
+- Singleton resource managers: ShaderManager, TextureManager, FramebufferManager, MaterialManager
+- Smart pointer ownership throughout (std::unique_ptr for all managed resources)
 
 ## Screenshots
 
@@ -42,8 +50,15 @@ It’s designed for experiments and real-time graphics research.
 ![Screenshot](resources/screenshots/screenshot2.png)
 ![Screenshot](resources/screenshots/screenshot3.png)
 
-## Controls
-| Key        | Action                   |
-|------      |--------------------------|
-| WASD       | Move                     |
-| Alt + LMB  | Camera rotation          |
+## Dependencies
+
+| Library  | Purpose                        |
+|----------|--------------------------------|
+| OpenGL 4.6 | Graphics API                 |
+| GLFW     | Window and input               |
+| GLAD     | OpenGL function loader         |
+| GLM      | Math (vectors, matrices)       |
+| Assimp   | Model loading                  |
+| ImGui    | User interface                 |
+| spdlog   | Logging                        |
+| stb_image | Texture and HDR loading       |
