@@ -23,6 +23,9 @@ void main()
 {
     vec3 color   = texture(environment_map, TexCoords).rgb;
     
+    // Avoid Inf/NaN with PureSky skyboxes
+    color = min(color, vec3(65000.0)); 
+
     // Tonemapping + gamma to match scene colors
     color = aces_tone_map(color);
     color = pow(color, vec3(1.0 / 2.2));

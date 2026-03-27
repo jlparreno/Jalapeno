@@ -61,7 +61,7 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	// Create render passes (IN ORDER!)
 	add_render_pass<ShadowPass>();
 	add_render_pass<GeometryPass>();
-	add_render_pass<SkyboxPass>()->load_from_hdr(static_cast<std::string>(TEXTURES_DIR) + "venice_sunset_2k.hdr");
+	add_render_pass<SkyboxPass>()->load_from_hdr(static_cast<std::string>(TEXTURES_DIR) + "kloofendal_48d_partly_cloudy_puresky_2k.hdr");
 }
 
 void Renderer::run()
