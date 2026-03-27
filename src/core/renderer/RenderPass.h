@@ -41,4 +41,25 @@ public:
      * @param shader The shader program to upload the light uniforms to
      */
     virtual void upload_lights(Scene& scene, ShaderProgram* shader) = 0;
+
+    /**
+     * @brief Enables or disables this render pass
+     *
+     * When disabled, the Renderer skips this pass entirely during execution.
+     *
+     * @param enabled True to enable the pass, false to disable it
+     */
+    void set_enabled(bool enabled) { m_enabled = enabled; }
+
+    /**
+     * @brief Returns whether this render pass is currently enabled
+     *
+     * @return True if the pass will be executed by the Renderer, false if it is skipped
+     */
+    bool get_enabled() const { return m_enabled; }
+
+protected:
+
+    // Whether this pass is active and should be executed each frame.
+    bool m_enabled{ true };
 };

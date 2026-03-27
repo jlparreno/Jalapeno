@@ -117,6 +117,7 @@ void UIManager::update()
     draw_properties();
     draw_materials();
     draw_log_panel();
+    draw_render_settings();
     draw_viewport();
 }
 
@@ -399,6 +400,7 @@ void UIManager::draw_hierarchy()
             {
                 m_selected_renderable = renderable;
                 m_selected_light = nullptr;
+                m_selected_material = nullptr;
             }
 
             if (opened)
@@ -426,6 +428,7 @@ void UIManager::draw_hierarchy()
             {
                 m_selected_light = light.get();
                 m_selected_renderable = nullptr;
+                m_selected_material = nullptr;
             }
 
             if (opened)
@@ -441,55 +444,56 @@ void UIManager::draw_properties()
     ImGui::Begin("Properties");
 
     // Depending on the selected object, draw specific properties
-    if(m_selected_renderable)
+    if (m_selected_renderable)
     {
         ImGui::SeparatorText("Transform");
+
+        float widget_width = ImGui::GetContentRegionAvail().x - 80.0f;
 
         glm::vec3 position = m_selected_renderable->get_position();
         glm::vec3 rotation = m_selected_renderable->get_rotation();
         glm::vec3 scale = m_selected_renderable->get_scale();
 
-        ImGui::PushItemWidth(-1);
-
-        ImGui::Text("Position");
+        ImGui::Text("Position"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
         if (ImGui::DragFloat3("##position", &position.x, 0.1f))
             m_selected_renderable->set_position(position);
 
-        ImGui::Text("Rotation");
+        ImGui::Text("Rotation"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
         if (ImGui::DragFloat3("##rotation", &rotation.x, 0.5f))
             m_selected_renderable->set_rotation(rotation);
 
-        ImGui::Text("Scale");
+        ImGui::Text("Scale"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
         if (ImGui::DragFloat3("##scale", &scale.x, 0.01f, 0.001f, 1000.0f))
             m_selected_renderable->set_scale(scale);
-
-        ImGui::PopItemWidth();
     }
     else if (m_selected_light)
     {
         ImGui::SeparatorText("Light");
 
-        // Get light type using dynamic cast
-        std::string type_str;
-        if (dynamic_cast<DirectionalLight*>(m_selected_light)) 
-            type_str = "Directional";
-        else if (dynamic_cast<PointLight*>(m_selected_light))       
-            type_str = "Point";
-        else                                             
-            type_str = "Unknown";
+        float widget_width = ImGui::GetContentRegionAvail().x - 80.0f;
 
-        ImGui::LabelText("Type", "%s", type_str.c_str());
+        // Tipo — read only
+        std::string type_str;
+        if (dynamic_cast<DirectionalLight*>(m_selected_light)) type_str = "Directional";
+        else if (dynamic_cast<PointLight*>(m_selected_light))  type_str = "Point";
+        else                                                   type_str = "Unknown";
+
+        ImGui::Text("Type"); ImGui::SameLine(80);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.75f, 1.0f, 1.0f));
+        ImGui::Text("%s", type_str.c_str());
+        ImGui::PopStyleColor();
 
         ImGui::Spacing();
         ImGui::SeparatorText("Properties");
 
-        // Base Light class properties
+        ImGui::Text("Color"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
         glm::vec3 color = m_selected_light->get_color();
-        if (ImGui::ColorEdit3("Color", &color.x))
+        if (ImGui::ColorEdit3("##color", &color.x))
             m_selected_light->set_color(color);
 
+        ImGui::Text("Intensity"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
         float intensity = m_selected_light->get_intensity();
-        if (ImGui::DragFloat("Intensity", &intensity, 0.05f, 0.0f, 100.0f))
+        if (ImGui::DragFloat("##intensity", &intensity, 0.05f, 0.0f, 100.0f))
             m_selected_light->set_intensity(intensity);
 
         bool shadows = m_selected_light->get_shadows_enabled();
@@ -498,21 +502,22 @@ void UIManager::draw_properties()
 
         ImGui::Spacing();
 
-        // Subclass-specific properties
         if (auto* dl = dynamic_cast<DirectionalLight*>(m_selected_light))
         {
             ImGui::SeparatorText("Directional Light");
 
+            ImGui::Text("Direction"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
             glm::vec3 direction = dl->get_direction();
-            if (ImGui::DragFloat3("Direction", &direction.x, 0.01f, -1.0f, 1.0f))
+            if (ImGui::DragFloat3("##direction", &direction.x, 0.01f, -1.0f, 1.0f))
                 dl->set_direction(direction);
         }
         else if (auto* pl = dynamic_cast<PointLight*>(m_selected_light))
         {
             ImGui::SeparatorText("Point Light");
 
+            ImGui::Text("Position"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
             glm::vec3 position = pl->get_position();
-            if (ImGui::DragFloat3("Position", &position.x, 0.1f))
+            if (ImGui::DragFloat3("##position", &position.x, 0.1f))
                 pl->set_position(position);
 
             ImGui::Spacing();
@@ -522,14 +527,104 @@ void UIManager::draw_properties()
             float linear = pl->get_linear();
             float quadratic = pl->get_quadratic();
 
-            if (ImGui::DragFloat("Constant", &constant, 0.01f, 0.0f, 10.0f))
+            ImGui::Text("Constant");  ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            if (ImGui::DragFloat("##constant", &constant, 0.01f, 0.0f, 10.0f))
                 pl->set_attenuation(constant, linear, quadratic);
 
-            if (ImGui::DragFloat("Linear", &linear, 0.001f, 0.0f, 1.0f))
+            ImGui::Text("Linear");    ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            if (ImGui::DragFloat("##linear", &linear, 0.001f, 0.0f, 1.0f))
                 pl->set_attenuation(constant, linear, quadratic);
 
-            if (ImGui::DragFloat("Quadratic", &quadratic, 0.0001f, 0.0f, 1.0f))
+            ImGui::Text("Quadratic"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            if (ImGui::DragFloat("##quadratic", &quadratic, 0.0001f, 0.0f, 1.0f))
                 pl->set_attenuation(constant, linear, quadratic);
+        }
+    }
+    else if (m_selected_material)
+    {
+        ImGui::SeparatorText("Material");
+
+        ImGui::Text("Name"); ImGui::SameLine(80); ImGui::TextDisabled("%s", m_selected_material->get_name().c_str());
+        ImGui::Text("Type"); ImGui::SameLine(80);
+
+        if (auto* pbr = dynamic_cast<PBRMaterial*>(m_selected_material))
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.75f, 1.0f, 1.0f));
+            ImGui::Text("PBR");
+            ImGui::PopStyleColor();
+
+            ImGui::Spacing();
+            ImGui::SeparatorText("Properties");
+
+            // Fijar el ancho del widget dejando espacio para el label
+            float widget_width = ImGui::GetContentRegionAvail().x - 80.0f;
+
+            ImGui::Text("Albedo");   ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 albedo = pbr->get_albedo();
+            if (ImGui::ColorEdit3("##albedo", &albedo.x))
+                pbr->set_albedo(albedo);
+
+            ImGui::Text("Metallic"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            float metallic = pbr->get_metallic();
+            if (ImGui::SliderFloat("##metallic", &metallic, 0.0f, 1.0f))
+                pbr->set_metallic(metallic);
+
+            ImGui::Text("Roughness"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            float roughness = pbr->get_roughness();
+            if (ImGui::SliderFloat("##roughness", &roughness, 0.0f, 1.0f))
+                pbr->set_roughness(roughness);
+        }
+        else if (auto* phong = dynamic_cast<PhongMaterial*>(m_selected_material))
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.75f, 1.0f, 1.0f));
+            ImGui::Text("Phong");
+            ImGui::PopStyleColor();
+
+            ImGui::Spacing();
+            ImGui::SeparatorText("Properties");
+
+            float widget_width = ImGui::GetContentRegionAvail().x - 80.0f;
+
+            ImGui::Text("Ambient");  ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 ambient = phong->get_ambient_color();
+            if (ImGui::ColorEdit3("##ambient", &ambient.x))
+                phong->set_ambient_color(ambient);
+
+            ImGui::Text("Diffuse");  ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 diffuse = phong->get_diffuse_color();
+            if (ImGui::ColorEdit3("##diffuse", &diffuse.x))
+                phong->set_diffuse_color(diffuse);
+
+            ImGui::Text("Specular"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 specular = phong->get_specular_color();
+            if (ImGui::ColorEdit3("##specular", &specular.x))
+                phong->set_specular_color(specular);
+
+            ImGui::Text("Shininess"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            float shininess = phong->get_shininess();
+            if (ImGui::SliderFloat("##shininess", &shininess, 1.0f, 256.0f))
+                phong->set_shininess(shininess);
+        }
+        else if (auto* lambert = dynamic_cast<LambertMaterial*>(m_selected_material))
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.75f, 1.0f, 1.0f));
+            ImGui::Text("Lambert");
+            ImGui::PopStyleColor();
+
+            ImGui::Spacing();
+            ImGui::SeparatorText("Properties");
+
+            float widget_width = ImGui::GetContentRegionAvail().x - 80.0f;
+
+            ImGui::Text("Ambient"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 ambient = lambert->get_ambient_color();
+            if (ImGui::ColorEdit3("##ambient", &ambient.x))
+                lambert->set_ambient_color(ambient);
+
+            ImGui::Text("Diffuse"); ImGui::SameLine(80); ImGui::SetNextItemWidth(widget_width);
+            glm::vec3 diffuse = lambert->get_diffuse_color();
+            if (ImGui::ColorEdit3("##diffuse", &diffuse.x))
+                lambert->set_diffuse_color(diffuse);
         }
     }
     else
@@ -596,6 +691,7 @@ void UIManager::draw_material_card(const std::string& name, Material* material)
 
     ImGui::PushID(name.c_str());
 
+    bool is_selected = (m_selected_material == material);
     float card_width = ImGui::GetContentRegionAvail().x - m_card_padding;
     GLuint white_id = TextureManager::instance().get_white_texture()->get_id();
 
@@ -613,7 +709,12 @@ void UIManager::draw_material_card(const std::string& name, Material* material)
     // Card height depending on has_real_textures. Materials with no textures will show in a thinner card
     float card_height = has_real_textures ? m_thumbnail_size + 52.0f : 42.0f;
 
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.18f, 0.19f, 0.21f, 1.00f));
+    // Highlight if its selected
+    if (is_selected)
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.25f, 0.35f, 0.50f, 1.0f));
+    else
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.18f, 0.19f, 0.21f, 1.0f));
+
     ImGui::BeginChild("##card", ImVec2(card_width, card_height), true, ImGuiWindowFlags_NoScrollbar);
 
     // Material type badge
@@ -676,6 +777,14 @@ void UIManager::draw_material_card(const std::string& name, Material* material)
 
             ImGui::EndGroup();
         }
+    }
+
+    // Check click
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
+    {
+        m_selected_material = material;
+        m_selected_renderable = nullptr;
+        m_selected_light = nullptr;
     }
 
     ImGui::EndChild();
@@ -769,6 +878,35 @@ void UIManager::draw_log_panel()
         ImGui::SetScrollHereY(1.0f);
 
     ImGui::EndChild();
+
+    ImGui::End();
+}
+
+void UIManager::draw_render_settings()
+{
+    ImGui::Begin("Render Settings");
+
+    float widget_width = ImGui::GetContentRegionAvail().x - 90.0f;
+
+    ImGui::SeparatorText("Passes");
+
+    // Skybox
+    bool skybox_enabled = m_skybox_pass && m_skybox_pass->get_enabled();
+    if (ImGui::Checkbox("Skybox", &skybox_enabled) && m_skybox_pass)
+        m_skybox_pass->set_enabled(skybox_enabled);
+
+    ImGui::Spacing();
+    ImGui::SeparatorText("Display");
+
+    // Wireframe
+    bool wireframe = Renderer::instance().get_wireframe();
+    if (ImGui::Checkbox("Wireframe", &wireframe))
+        Renderer::instance().set_wireframe(wireframe);
+
+    // VSync
+    bool vsync = Renderer::instance().get_vsync();
+    if (ImGui::Checkbox("VSync", &vsync))
+        Renderer::instance().set_vsync(vsync);
 
     ImGui::End();
 }

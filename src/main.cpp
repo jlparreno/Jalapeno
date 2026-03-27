@@ -43,8 +43,8 @@ int main()
     if (pbr_1)
     {
         pbr_1->set_albedo(glm::vec3(1.0f, 0.0f, 0.0f));
-        pbr_1->set_metallic(0.0f);
-        pbr_1->set_roughness(0.0f);
+        pbr_1->set_metallic(1.0f);
+        pbr_1->set_roughness(0.3f);
     }
 
     // ------------------------------------------------------------------------------
@@ -53,13 +53,13 @@ int main()
     Scene* scene = new Scene("Main Scene");
 
     // MODELS
-    Sphere* sphere = scene->add_sphere("Sphere 1");
+   /* Sphere* sphere = scene->add_sphere("Sphere 1");
     if (sphere)
     {
         sphere->set_material(pbr_1);
         sphere->set_position(glm::vec3(5.0f, 1.0f, 0.0f));
         sphere->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-    }
+    }*/
 
     Model* sponza = scene->add_model("Sponza", static_cast<std::string>(MODELS_DIR) + "Sponza/glTF/Sponza.gltf");
     if (sponza)
@@ -68,22 +68,22 @@ int main()
     }
     
     // LIGHTS
-    //DirectionalLight* sun = scene->add_directional_light(
-    //    "Sun Light",
-    //    glm::vec3(-0.35f, -0.85f, -0.45f),  // Direction
-    //    glm::vec3(1.0f, 0.95f, 0.85f),   // Warmer color
-    //    3.0f                             // Intensity
-    //);
-    //sun->set_shadows_enabled(true);
+    DirectionalLight* sun = scene->add_directional_light(
+        "Sun Light",
+        glm::vec3(-0.2f, -0.9f, -0.3f),  // Direction
+        glm::vec3(1.0f, 0.95f, 0.85f),   // Warmer color
+        3.0f                             // Intensity
+    );
+    sun->set_shadows_enabled(true);
 
-    PointLight* point1 = scene->add_point_light(
+    /*PointLight* point1 = scene->add_point_light(
         "Point Light",
         glm::vec3(0.0f, 5.0f, 0.0f),
         glm::vec3(1.0f),
         1.0f
     );
     point1->set_attenuation(1.0f, 0.09f, 0.032f);
-    point1->set_shadows_enabled(true);
+    point1->set_shadows_enabled(true);*/
 
     // ------------------------------------------------------------------------------
     // RENDER LOOP

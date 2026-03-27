@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include "UIManager.h"
 #include "config.h"
 
 Renderer::Renderer(const std::string& name, int width, int height) :
@@ -61,7 +62,12 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	// Create render passes (IN ORDER!)
 	add_render_pass<ShadowPass>();
 	add_render_pass<GeometryPass>();
-	add_render_pass<SkyboxPass>()->load_from_hdr(static_cast<std::string>(TEXTURES_DIR) + "kloofendal_48d_partly_cloudy_puresky_2k.hdr");
+	
+	SkyboxPass* skybox = add_render_pass<SkyboxPass>();
+	skybox->load_from_hdr(static_cast<std::string>(TEXTURES_DIR) + "kloofendal_48d_partly_cloudy_puresky_2k.hdr");
+
+	// Set skybox pass for UI control
+	UIManager::instance().set_skybox_pass(skybox);
 }
 
 void Renderer::run()
@@ -174,7 +180,10 @@ void Renderer::render_scene()
 	// Call to the configured Render Passes
 	for (auto& pass : m_passes)
 	{
-		pass->execute(*m_scene);
+		if (pass->get_enabled())
+		{
+			pass->execute(*m_scene);
+		}
 	}
 
 	// Blit MSAA → resolve FBO (resolve will be rendered in ImGUI viewport)
@@ -248,4 +257,16 @@ void Renderer::terminate()
 	// Terminate UI and GLFW
 	UIManager::instance().terminate();
 	glfwTerminate();
+}
+
+void Renderer::set_vsync(bool enabled)
+{
+	m_vsync = enabled;
+	glfwSwapInterval(enabled ? 1 : 0);
+}
+
+void Renderer::set_wireframe(bool enabled)
+{
+	m_wireframe = enabled;
+	glPolygonMode(GL_FRONT_AND_BACK, enabled ? GL_LINE : GL_FILL);
 }

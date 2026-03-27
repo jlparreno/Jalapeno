@@ -1,4 +1,5 @@
 #include "InputManager.h"
+#include "UIManager.h"
 
 void InputManager::init(GLFWwindow* window)
 {

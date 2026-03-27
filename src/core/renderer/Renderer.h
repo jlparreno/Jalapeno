@@ -9,7 +9,6 @@
 #include "FramebufferManager.h"
 #include "ShaderManager.h"
 #include "InputManager.h"
-#include "UIManager.h"
 #include "ShadowPass.h"
 #include "GeometryPass.h"
 #include "SkyboxPass.h"
@@ -122,6 +121,41 @@ public:
      */
     Scene* get_scene() { return m_scene; }
 
+    /**
+     * @brief Enables or disables vertical synchronization
+     *
+     * When enabled, frame presentation is synchronized with the monitor refresh
+     * rate, capping the framerate and eliminating screen tearing. 
+     * When disabled, the engine renders as fast as possible.
+     *
+     * @param enabled True to enable VSync, false to disable it
+     */
+    void set_vsync(bool enabled);
+
+    /**
+     * @brief Enables or disables wireframe rendering mode
+     *
+     * When enabled, all geometry is rendered as wireframe using GL_LINE polygon
+     * mode. When disabled, restores the default GL_FILL polygon mode.
+     *
+     * @param enabled True to enable wireframe mode, false to restore solid rendering
+     */
+    void set_wireframe(bool enabled);
+
+    /**
+     * @brief Returns whether vertical synchronization is currently enabled
+     * 
+     * @return True if VSync is active, false otherwise
+     */
+    bool get_vsync() const { return m_vsync; }
+
+    /**
+     * @brief Returns whether wireframe rendering mode is currently enabled
+     * 
+     * @return True if wireframe mode is active, false otherwise
+     */
+    bool get_wireframe() const { return m_wireframe; }
+
 
     // Timing
     float delta_time = 0.0f;	// Time between current frame and last frame
@@ -187,4 +221,12 @@ private:
 
     // Ordered list of passes configured in the renderer
     std::vector<std::unique_ptr<RenderPass>> m_passes;
+
+    // RENDER SETTINGS
+
+    // Whether vertical synchronization is currently active
+    bool m_vsync { false };
+
+    // Whether wireframe polygon mode is currently active
+    bool m_wireframe { false };
 };

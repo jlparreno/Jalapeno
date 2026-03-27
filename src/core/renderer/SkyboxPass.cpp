@@ -103,8 +103,8 @@ void SkyboxPass::convert_hdr_to_cubemap(const Texture* hdr_texture)
 {
     // Create skybox FBO to store the environment cubemap
     FramebufferSpec spec;
-    spec.width = 512;
-    spec.height = 512;
+    spec.width = 1024;
+    spec.height = 1024;
     spec.resizable = false;
     spec.is_cubemap = true;
     spec.attachments = {

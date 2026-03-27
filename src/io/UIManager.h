@@ -13,11 +13,11 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include "Renderer.h"
 #include "Scene.h"
 #include "PBRMaterial.h"
 #include "PhongMaterial.h"
 #include "LambertMaterial.h"
+#include "SkyBoxPass.h"
 #include "ConsoleSink.h"
 
 /**
@@ -97,6 +97,16 @@ public:
      * @param scene Pointer to the Scene object containing all renderables and lights
      */
     void set_scene(Scene* scene) { m_scene = scene; }
+
+    /**
+     * @brief Sets the active skybox pass configured in the renderer
+     *
+     * Should be called by the Renderer whenever a new ShadowPass is configured.
+     * Allows to enable/disable the execution od the render pass through the UI.
+     *
+     * @param scene Pointer to the SkyBoxPass
+     */
+    void set_skybox_pass(SkyboxPass* pass) { m_skybox_pass = pass; }
 
     /**
      * @brief Returns whether the mouse is hovering the viewport panel
@@ -192,6 +202,15 @@ private:
     void draw_log_panel();
 
     /**
+     * @brief Renders the render settings panel
+     *
+     * Displays render settings to enable/disable in real time and see the changes
+     * in the renderer. Has a section with configurable render passes and another
+     * one with specific render modes (Vsync, wireframe...)
+     */
+    void draw_render_settings();
+
+    /**
      * @brief Renders the viewport panel
      *
      * Displays the resolved (non-MSAA) framebuffer as an ImGui image filling
@@ -210,11 +229,17 @@ private:
     // Shared spdlog sink that captures log messages for display in the console panel
     std::shared_ptr<ConsoleSinkMt> m_sink;
 
+    // Pointer to the Skybox Pass configured in the renderer, to enable/disable it
+    SkyboxPass* m_skybox_pass{ nullptr };
+
     // Currently selected renderable in the hierarchy panel. Nullptr if none
     Renderable* m_selected_renderable{ nullptr };
 
     // Currently selected light in the hierarchy panel. Nullptr if none
     Light* m_selected_light{ nullptr };
+
+    // Currently selected material in the materials panel. Nullptr if none
+    Material* m_selected_material{ nullptr };
 
     // --- VIEWPORT ---
 
