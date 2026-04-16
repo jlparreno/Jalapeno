@@ -1,21 +1,21 @@
 #pragma once
 
-#include <glad/glad.h>
-
 #include "ShaderProgram.h"
 #include "Texture.h"
 #include "Material.h"
+#include "VertexBuffer.h"
 
 #include <string>
 #include <vector>
+#include <memory>
 
 /**
  * @brief Represents a single drawable mesh of a 3D model
  *
- * A Mesh stores its own vertices, indices and material, and manages all 
- * required OpenGL buffers (VAO, VBO, EBO). Once constructed, it can be drawn 
- * using a shader program. This class is typically used by Model to represent 
- * each submesh loaded via ASSIMP, but can be used independently.
+ * A Mesh owns its CPU-side geometry (vertices, indices) and material, and
+ * holds a VertexBuffer that manages the corresponding GPU resources.
+ * This separation keeps geometry data decoupled from the graphics API,
+ * making it straightforward to swap the GPU backend (e.g. Vulkan).
  */
 class Mesh 
 {
@@ -67,25 +67,14 @@ public:
 
 private:
 
-    /**
-     * @brief Initializes VAO, VBO, and EBO, and configures vertex attributes.
-     *
-     * This function generates and binds the necessary OpenGL buffer objects,
-     * uploads vertex/index data to the GPU, and defines attribute pointers
-     * for vertex positions, normals, UVs, tangents, etc.
-     */
-    void setup_buffers();
-
-    // Mesh data
+    // CPU-side geometry data
     std::vector<Vertex>       m_vertices;
     std::vector<unsigned int> m_indices;
 
-    // Material used to draw the mesh
-    Material* m_material;
+    // Material used to shade this mesh
+    Material* m_material { nullptr };
 
-    // OpenGL Render Data
-    GLuint m_VAO;
-    GLuint m_VBO;
-    GLuint m_EBO;
+    // GPU representation — owns VAO, VBO and EBO
+    std::unique_ptr<VertexBuffer> m_vertex_buffer;
 };
 
