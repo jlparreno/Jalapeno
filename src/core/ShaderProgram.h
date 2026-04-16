@@ -152,6 +152,14 @@ private:
      */
     std::string load_file(ShaderType type, const std::string& path);
 
+    /**
+     * @brief Loads a shader include file verbatim (no further include processing)
+     *
+     * @param path Absolute path to the include file
+     * @return File contents as a string, or empty string if not found
+     */
+    std::string load_include(const std::string& path);
+
 
     /**
      * @brief Returns the location of a uniform variable, caching the result.

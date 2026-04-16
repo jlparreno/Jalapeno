@@ -45,6 +45,11 @@ Renderer::Renderer(const std::string& name, int width, int height) :
 	};
 	FramebufferManager::instance().create_framebuffer("resolve", resolve_spec);
 
+	// Create Light UBOs
+	auto& buffer_mgr = BufferManager::instance();
+	buffer_mgr.create_uniform_buffer("point_lights",       sizeof(PointLightBlock),       POINT_LIGHT_UBO_BINDING);
+	buffer_mgr.create_uniform_buffer("directional_lights", sizeof(DirectionalLightBlock), DIRECTIONAL_LIGHT_UBO_BINDING);
+
 	// Create render passes (IN ORDER!)
 	add_render_pass<ShadowPass>();
 	add_render_pass<GeometryPass>();
@@ -227,8 +232,11 @@ void Renderer::display_frame_times()
 
 void Renderer::terminate()
 {
-	// Release all GPU shader programs before destroying the OpenGL context
+	// Release all GPU resources before destroying the OpenGL context
 	ShaderManager::instance().clear();
+	BufferManager::instance().clear();
+	FramebufferManager::instance().clear();
+	TextureManager::instance().clear();
 
 	// Terminate UI and GLFW
 	UIManager::instance().terminate();

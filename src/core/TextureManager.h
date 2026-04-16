@@ -167,6 +167,14 @@ public:
      */
     void remove_texture(const std::string& name);
 
+    /**
+     * @brief Destroys all managed textures and clears the registry
+     *
+     * Must be called before glfwTerminate() to ensure GPU texture objects
+     * are released while the OpenGL context is still active.
+     */
+    void clear();
+
 private:
 
     // Private constructor to enforce singleton pattern

@@ -1,48 +1,17 @@
 #version 460 core
 
+#include "lights.glsl"
+
 const float PI = 3.14159265359;
 
 const vec3 sample_offset_directions[20] = vec3[]
 (
-   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1),
    vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
    vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
-);  
-
-struct PointLight 
-{
-    vec3  position;
-    vec3  color;
-    float intensity;
-    float constant;
-    float linear;
-    float quadratic;
-
-    bool        shadows_enabled;
-    samplerCube shadow_cube;
-    float       far_plane;
-};
-
-struct DirectionalLight 
-{
-    vec3  direction;
-    vec3  color;
-    float intensity;
-
-    bool        shadows_enabled;
-    mat4        light_matrix;
-    sampler2D   shadow_tex;
-};
-
-#define MAX_POINT_LIGHTS 4
-uniform PointLight point_lights[MAX_POINT_LIGHTS];
-uniform int        num_point_lights;
-
-#define MAX_DIRECTIONAL_LIGHTS 2
-uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
-uniform int              num_directional_lights;
+);
 
 struct Material 
 {
@@ -160,32 +129,30 @@ vec3 aces_tone_map(vec3 x)
 
 // --- SHADOWS Functions ---
 
-//Directional Lights Shadows
+// Directional Lights Shadows
 float compute_shadow(int index, vec3 normal, vec3 light_dir)
 {
-    vec4  frag_light_space = directional_lights[index].light_matrix * vec4(FragPos, 1.0);
-    vec3  proj_coords      = frag_light_space.xyz / frag_light_space.w;
-    proj_coords            = proj_coords * 0.5 + 0.5;
+    vec4 frag_light_space = directional_lights.data[index].light_matrix * vec4(FragPos, 1.0);
+    vec3 proj_coords      = frag_light_space.xyz / frag_light_space.w;
+    proj_coords           = proj_coords * 0.5 + 0.5;
 
     if (proj_coords.z > 1.0)
         return 0.0;
 
-    // Bias for shadow acne, at the moment commented because it is causing Peter panning
-    //float bias        = max(0.005 * (1.0 - dot(normal, light_dir)), 0.0001);
-    float shadow      = 0.0;
-    vec2  texel_size  = 1.0 / textureSize(directional_lights[index].shadow_tex, 0);
+    float shadow     = 0.0;
+    vec2  texel_size = 1.0 / textureSize(directional_shadow_maps[index], 0);
 
-    // PCF function, 9 samples around fragment
+    // PCF — 3x3 kernel
     for (int x = -1; x <= 1; x++)
     {
         for (int y = -1; y <= 1; y++)
         {
-            float pcf_depth = texture(directional_lights[index].shadow_tex, proj_coords.xy + vec2(x, y) * texel_size).r;
-            shadow += proj_coords.z /*- bias*/ > pcf_depth ? 1.0 : 0.0;
+            float pcf_depth = texture(directional_shadow_maps[index], proj_coords.xy + vec2(x, y) * texel_size).r;
+            shadow += proj_coords.z > pcf_depth ? 1.0 : 0.0;
         }
     }
 
-    return shadow / 9.0;  // 9 samples average
+    return shadow / 9.0;
 }
 
 // Point Lights Shadows
@@ -269,17 +236,17 @@ void main()
     vec3 Lo = vec3(0.0);
 
     // Point Lights
-    for (int i = 0; i < num_point_lights; i++)
+    for (int i = 0; i < point_lights.count; i++)
     {
-        vec3  L         = normalize(point_lights[i].position - FragPos);
-        vec3  H         = normalize(V + L); // This is the vector that "bisects" the angle between L and V, to check microfacets looking to the observer
-        
-        float dist      = length(point_lights[i].position - FragPos);
-        float atten     = 1.0 / (point_lights[i].constant + 
-                                 point_lights[i].linear * dist + 
-                                 point_lights[i].quadratic * dist * dist);
+        vec3  L         = normalize(point_lights.data[i].position.xyz - FragPos);
+        vec3  H         = normalize(V + L);
 
-        vec3  radiance  = point_lights[i].color * point_lights[i].intensity * atten;
+        float dist      = length(point_lights.data[i].position.xyz - FragPos);
+        float atten     = 1.0 / (point_lights.data[i].attenuation.x +
+                                 point_lights.data[i].attenuation.y * dist +
+                                 point_lights.data[i].attenuation.z * dist * dist);
+
+        vec3  radiance  = point_lights.data[i].color.xyz * point_lights.data[i].color.w * atten;
 
         // Cook-Torrance BRDF
         float NDF = distribution_ggx(N, H, roughness);  // Normal Distribution Function
@@ -297,9 +264,9 @@ void main()
 
         // Compute point light shadow
         float shadow = 0.0;
-        if (point_lights[i].shadows_enabled)
+        if (point_lights.data[i].shadow.x > 0.5)
         {
-            shadow = compute_point_shadow(point_lights[i].shadow_cube, point_lights[i].position, point_lights[i].far_plane);
+            shadow = compute_point_shadow(point_shadow_cubes[i], point_lights.data[i].position.xyz, point_lights.data[i].shadow.y);
         }
 
         // Final contribution of this light
@@ -308,12 +275,12 @@ void main()
     }
 
     // Directional Lights
-    for (int i = 0; i < num_directional_lights; i++)
+    for (int i = 0; i < directional_lights.count; i++)
     {
-        vec3  L        = normalize(-directional_lights[i].direction);
+        vec3  L        = normalize(-directional_lights.data[i].direction.xyz);
         vec3  H        = normalize(V + L);
 
-        vec3  radiance = directional_lights[i].color * directional_lights[i].intensity;
+        vec3  radiance = directional_lights.data[i].color.xyz * directional_lights.data[i].color.w;
 
         // Cook-Torrance BRDF
         float NDF = distribution_ggx(N, H, roughness);  // Normal Distribution Function
@@ -329,7 +296,7 @@ void main()
 
         // Compute shadow for this light
         float shadow = 0.0;
-        if(directional_lights[i].shadows_enabled)
+        if (directional_lights.data[i].shadow.x > 0.5)
         {
             shadow = compute_shadow(i, N, L);
         }

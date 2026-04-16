@@ -16,7 +16,7 @@
 ### Lighting & Shadows
 - Directional lights with PCF shadow mapping
 - Point lights with omnidirectional shadow mapping
-- Support for multiple lights (up to 2 directional, 4 point lights)
+- Support for multiple lights (up to 2 directional, 4 point lights) via Uniform Buffer Objects (UBOs)
 
 ### Materials
 - Lambert (diffuse only)
@@ -39,7 +39,7 @@
 - Render Settings panel — MSAA, skybox toggle, wireframe, VSync
 
 ### Architecture
-- Singleton resource managers: ShaderManager, TextureManager, FramebufferManager, MaterialManager
+- Singleton resource managers: ShaderManager, TextureManager, FramebufferManager, MaterialManager, BufferManager
 - Smart pointer ownership throughout (std::unique_ptr for all managed resources)
 
 ## Screenshots

@@ -1,46 +1,15 @@
 #version 460 core
 
+#include "lights.glsl"
+
 const vec3 sample_offset_directions[20] = vec3[]
 (
-   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1),
    vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
    vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
-);  
-
-struct PointLight 
-{
-    vec3  position;
-    vec3  color;
-    float intensity;
-    float constant;
-    float linear;
-    float quadratic;
-
-    bool        shadows_enabled;
-    samplerCube shadow_cube;
-    float       far_plane;
-};
-
-struct DirectionalLight 
-{
-    vec3  direction;
-    vec3  color;
-    float intensity;
-
-    bool      shadows_enabled;
-    mat4      light_matrix;
-    sampler2D shadow_tex;
-};
-
-#define MAX_POINT_LIGHTS 4
-uniform PointLight point_lights[MAX_POINT_LIGHTS];
-uniform int        num_point_lights;
-
-#define MAX_DIRECTIONAL_LIGHTS 2
-uniform DirectionalLight directional_lights[MAX_DIRECTIONAL_LIGHTS];
-uniform int              num_directional_lights;
+);
 
 struct Material 
 {
@@ -66,45 +35,45 @@ vec3 get_diffuse_color()
 }
 
 // Calculates contribution of a single point light
-vec3 compute_point_light(PointLight light, vec3 normal, vec3 diffuse_color)
+vec3 compute_point_light(PointLightData light, vec3 normal, vec3 diffuse_color)
 {
-    vec3  light_dir   = normalize(light.position - FragPos);
-    float dist        = length(light.position - FragPos);
+    vec3  light_dir   = normalize(light.position.xyz - FragPos);
+    float dist        = length(light.position.xyz - FragPos);
 
-    float attenuation = 1.0 / (light.constant + 
-                               light.linear * dist + 
-                               light.quadratic * dist * dist);
+    float attenuation = 1.0 / (light.attenuation.x +
+                               light.attenuation.y * dist +
+                               light.attenuation.z * dist * dist);
 
     float diff    = max(dot(normal, light_dir), 0.0);
-    vec3  diffuse = diff * diffuse_color * light.color * light.intensity;
+    vec3  diffuse = diff * diffuse_color * light.color.xyz * light.color.w;
 
     return diffuse * attenuation;
 }
 
 // Calculates contribution of a single directional light
-vec3 compute_directional_light(DirectionalLight light, vec3 normal, vec3 base_color)
+vec3 compute_directional_light(DirectionalLightData light, vec3 normal, vec3 base_color)
 {
-    vec3  light_dir = normalize(-light.direction);
+    vec3  light_dir = normalize(-light.direction.xyz);
     float diff      = max(dot(normal, light_dir), 0.0);
-    return (material.ambient_color + diff * light.color * light.intensity) * base_color;
+    return (material.ambient_color + diff * light.color.xyz * light.color.w) * base_color;
 }
 
 // Directional Shadows
 float compute_directional_shadow(int index, vec3 normal, vec3 light_dir)
 {
-    vec4  frag_light_space = directional_lights[index].light_matrix * vec4(FragPos, 1.0);
-    vec3  proj_coords      = frag_light_space.xyz / frag_light_space.w;
-    proj_coords            = proj_coords * 0.5 + 0.5;
+    vec4 frag_light_space = directional_lights.data[index].light_matrix * vec4(FragPos, 1.0);
+    vec3 proj_coords      = frag_light_space.xyz / frag_light_space.w;
+    proj_coords           = proj_coords * 0.5 + 0.5;
 
     if (proj_coords.z > 1.0)
         return 0.0;
 
     float shadow     = 0.0;
-    vec2  texel_size = 1.0 / textureSize(directional_lights[index].shadow_tex, 0);
+    vec2  texel_size = 1.0 / textureSize(directional_shadow_maps[index], 0);
     for (int x = -1; x <= 1; x++)
     for (int y = -1; y <= 1; y++)
     {
-        float pcf_depth = texture(directional_lights[index].shadow_tex, proj_coords.xy + vec2(x, y) * texel_size).r;
+        float pcf_depth = texture(directional_shadow_maps[index], proj_coords.xy + vec2(x, y) * texel_size).r;
         shadow += proj_coords.z > pcf_depth ? 1.0 : 0.0;
     }
     return shadow / 9.0;
@@ -149,27 +118,27 @@ void main()
     vec3 result = material.ambient_color * diffuse_color;
 
     // Accumulate each point light contribution
-    for (int i = 0; i < num_point_lights; i++)
+    for (int i = 0; i < point_lights.count; i++)
     {
         float shadow = 0.0;
-        if (point_lights[i].shadows_enabled)
+        if (point_lights.data[i].shadow.x > 0.5)
         {
-            shadow = compute_point_shadow(point_lights[i].shadow_cube, point_lights[i].position, point_lights[i].far_plane);
+            shadow = compute_point_shadow(point_shadow_cubes[i], point_lights.data[i].position.xyz, point_lights.data[i].shadow.y);
         }
 
-        result += compute_point_light(point_lights[i], normal, diffuse_color) * (1.0 - shadow);
+        result += compute_point_light(point_lights.data[i], normal, diffuse_color) * (1.0 - shadow);
     }
 
     // Accumulate each directional light contribution
-    for (int i = 0; i < num_directional_lights; i++)
+    for (int i = 0; i < directional_lights.count; i++)
     {
         float shadow = 0.0;
-        if (directional_lights[i].shadows_enabled)
+        if (directional_lights.data[i].shadow.x > 0.5)
         {
-            shadow = compute_directional_shadow(i, normal, normalize(-directional_lights[i].direction));
+            shadow = compute_directional_shadow(i, normal, normalize(-directional_lights.data[i].direction.xyz));
         }
 
-        result += compute_directional_light(directional_lights[i], normal, diffuse_color) * (1.0 - shadow);
+        result += compute_directional_light(directional_lights.data[i], normal, diffuse_color) * (1.0 - shadow);
     }
     
     FragColor = vec4(result, 1.0);

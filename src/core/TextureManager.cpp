@@ -137,3 +137,10 @@ void TextureManager::remove_texture(const std::string& name)
 
     m_textures.erase(it);
 }
+
+void TextureManager::clear()
+{
+    m_textures.clear();
+    m_white_texture.reset();
+    m_white_cubemap.reset();
+}

@@ -1,4 +1,5 @@
 #include "GeometryPass.h"
+#include "BufferManager.h"
 
 void GeometryPass::execute(Scene& scene)
 {
@@ -78,80 +79,71 @@ void GeometryPass::execute(Scene& scene)
 
 void GeometryPass::upload_lights(Scene& scene, ShaderProgram* shader)
 {
-	int point_index = 0;
-	int directional_index = 0;
+	PointLightBlock       pl_block{};
+	DirectionalLightBlock dl_block{};
 
-	// Point lights are uploaded to the point_lights array and 
-	// directional lights to the directional_lights array
 	for (const auto& light : scene.get_scene_lights())
 	{
 		if (auto* pl = dynamic_cast<PointLight*>(light.get()))
 		{
-			std::string base = "point_lights[" + std::to_string(point_index) + "].";
-			shader->set_uniform(base + "position", pl->get_position());
-			shader->set_uniform(base + "color", pl->get_color());
-			shader->set_uniform(base + "intensity", pl->get_intensity());
-			shader->set_uniform(base + "constant", pl->get_constant());
-			shader->set_uniform(base + "linear", pl->get_linear());
-			shader->set_uniform(base + "quadratic", pl->get_quadratic());
-			shader->set_uniform(base + "shadows_enabled", pl->get_shadows_enabled());
+			// Ignore extra lights if any
+			if (pl_block.count >= MAX_POINT_LIGHTS) continue; 
 
-			//Shadow maps if any
+			GPUPointLight& gpu  = pl_block.lights[pl_block.count];
+			gpu.position        = glm::vec4(pl->get_position(), 0.0f);
+			gpu.color           = glm::vec4(pl->get_color(), pl->get_intensity());
+			gpu.attenuation     = glm::vec4(pl->get_constant(), pl->get_linear(), pl->get_quadratic(), 0.0f);
+			gpu.shadow          = glm::vec4(pl->get_shadows_enabled() ? 1.0f : 0.0f, pl->get_far_plane(), 0.0f, 0.0f);
+
 			if (pl->get_shadows_enabled() && pl->get_shadow_fbo())
 			{
-				int shadow_unit = POINT_SHADOW_START + point_index;
-				pl->get_shadow_fbo()->bind_depth_as_texture(shadow_unit);
-
-				shader->set_uniform(base + "shadow_cube", shadow_unit);
-				shader->set_uniform(base + "far_plane", pl->get_far_plane());
+				int unit = POINT_SHADOW_START + pl_block.count;
+				pl->get_shadow_fbo()->bind_depth_as_texture(unit);
+				shader->set_uniform("point_shadow_cubes[" + std::to_string(pl_block.count) + "]", unit);
 			}
 
-			point_index++;
+			pl_block.count++;
 		}
 		else if (auto* dl = dynamic_cast<DirectionalLight*>(light.get()))
 		{
-			std::string base = "directional_lights[" + std::to_string(directional_index) + "].";
-			shader->set_uniform(base + "direction", dl->get_direction());
-			shader->set_uniform(base + "color", dl->get_color());
-			shader->set_uniform(base + "intensity", dl->get_intensity());
-			shader->set_uniform(base + "shadows_enabled", dl->get_shadows_enabled());
+			// Ignore extra lights if any
+			if (dl_block.count >= MAX_DIRECTIONAL_LIGHTS) continue;
 
-			//Shadow maps if any
+			GPUDirectionalLight& gpu	= dl_block.lights[dl_block.count];
+			gpu.direction           = glm::vec4(dl->get_direction(), 0.0f);
+			gpu.color               = glm::vec4(dl->get_color(), dl->get_intensity());
+			gpu.shadow              = glm::vec4(dl->get_shadows_enabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+			gpu.light_matrix		= dl->get_light_space_matrix();
+
 			if (dl->get_shadows_enabled() && dl->get_shadow_fbo())
 			{
-				int shadow_unit = DIRECTIONAL_SHADOW_START + directional_index;
-				dl->get_shadow_fbo()->bind_depth_as_texture(shadow_unit);
-				
-				shader->set_uniform(base + "light_matrix", dl->get_light_space_matrix());
-				shader->set_uniform(base + "shadow_tex", shadow_unit);
+				int unit = DIRECTIONAL_SHADOW_START + dl_block.count;
+				dl->get_shadow_fbo()->bind_depth_as_texture(unit);
+				shader->set_uniform("directional_shadow_maps[" + std::to_string(dl_block.count) + "]", unit);
 			}
 
-			directional_index++;
+			dl_block.count++;
 		}
 	}
 
-	// Init unused slots to avoid default 0 for inactive samplers
-	for (int i = directional_index; i < MAX_DIRECTIONAL_LIGHTS; i++)
+	// Bind fallback textures for inactive shadow sampler slots
+	for (int i = pl_block.count; i < MAX_POINT_LIGHTS; i++)
 	{
-		std::string base = "directional_lights[" + std::to_string(i) + "].";
-		shader->set_uniform(base + "shadows_enabled", false);
-		shader->set_uniform(base + "shadow_tex", INACTIVE_SHADOW_2D_UNIT);
+		shader->set_uniform("point_shadow_cubes[" + std::to_string(i) + "]", INACTIVE_SHADOW_CUBE_UNIT);
 	}
-	for (int i = point_index; i < MAX_POINT_LIGHTS; i++)
+		
+	for (int i = dl_block.count; i < MAX_DIRECTIONAL_LIGHTS; i++)
 	{
-		std::string base = "point_lights[" + std::to_string(i) + "].";
-		shader->set_uniform(base + "shadows_enabled", false);
-		shader->set_uniform(base + "shadow_cube", INACTIVE_SHADOW_CUBE_UNIT);
+		shader->set_uniform("directional_shadow_maps[" + std::to_string(i) + "]", INACTIVE_SHADOW_2D_UNIT);
 	}
 
-	// Bind default white textures in inactive units
 	glActiveTexture(GL_TEXTURE0 + INACTIVE_SHADOW_2D_UNIT);
 	glBindTexture(GL_TEXTURE_2D, TextureManager::instance().get_white_texture()->get_id());
 
 	glActiveTexture(GL_TEXTURE0 + INACTIVE_SHADOW_CUBE_UNIT);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, TextureManager::instance().get_white_cubemap()->get_id());
 
-	// Count uniforms
-	shader->set_uniform("num_point_lights", point_index);
-	shader->set_uniform("num_directional_lights", directional_index);
+	// Upload light data to GPU via UBOs
+	BufferManager::instance().get_uniform_buffer("point_lights")->upload(&pl_block, sizeof(PointLightBlock));
+	BufferManager::instance().get_uniform_buffer("directional_lights")->upload(&dl_block, sizeof(DirectionalLightBlock));
 }

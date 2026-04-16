@@ -11,22 +11,58 @@ void ShaderProgram::add_shader(ShaderType type, const std::string& path)
 
 std::string ShaderProgram::load_file(ShaderType type, const std::string& path)
 {
-    // Check if the file exists in the disk
-    if (!std::filesystem::exists(path)) 
+    if (!std::filesystem::exists(path))
     {
         SPDLOG_ERROR("Shader file not found: {}", path);
         return "";
     }
 
-    // Open the file
     std::ifstream file(path);
-    if (!file.is_open()) 
+    if (!file.is_open())
     {
         SPDLOG_ERROR("Failed to open shader file: {}", path);
         return "";
     }
 
-    // Get and return the contents of the file
+    std::filesystem::path dir = std::filesystem::path(path).parent_path();
+
+    // Process source line by line, resolving #include directives
+    std::string result;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (line.rfind("#include", 0) == 0)
+        {
+            auto start = line.find('"');
+            auto end   = line.rfind('"');
+            if (start != std::string::npos && end != std::string::npos && start < end)
+            {
+                std::string include_path = (dir / line.substr(start + 1, end - start - 1)).string();
+                result += load_include(include_path) + "\n";
+                continue;
+            }
+        }
+        result += line + "\n";
+    }
+
+    return result;
+}
+
+std::string ShaderProgram::load_include(const std::string& path)
+{
+    if (!std::filesystem::exists(path))
+    {
+        SPDLOG_ERROR("Shader include not found: {}", path);
+        return "";
+    }
+
+    std::ifstream file(path);
+    if (!file.is_open())
+    {
+        SPDLOG_ERROR("Failed to open shader include: {}", path);
+        return "";
+    }
+
     std::stringstream buffer;
     buffer << file.rdbuf();
     return buffer.str();

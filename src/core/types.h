@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -59,6 +61,56 @@ struct Vertex
 
     glm::vec3 tangent;
     glm::vec3 bitangent;
+};
+
+/**
+ * @brief GPU-side point light data matching the std140 layout in lights.glsl
+ *
+ * All fields are vec4 to avoid std140 padding surprises with vec3.
+ */
+struct GPUPointLight
+{
+    glm::vec4 position;     // xyz = position, w = unused
+    glm::vec4 color;        // xyz = color, w = intensity
+    glm::vec4 attenuation;  // x = constant, y = linear, z = quadratic, w = unused
+    glm::vec4 shadow;       // x = shadows_enabled (0/1), y = far_plane, zw = unused
+};
+
+/**
+ * @brief GPU-side directional light data matching the std140 layout in lights.glsl
+ */
+struct GPUDirectionalLight
+{
+    glm::vec4 direction;    // xyz = direction, w = unused
+    glm::vec4 color;        // xyz = color, w = intensity
+    glm::vec4 shadow;       // x = shadows_enabled (0/1), yzw = unused
+    glm::mat4 light_matrix;
+};
+
+/**
+ * @brief Full UBO block for point lights
+ * 
+ * We need to add padding to make total size a multiple of 16 bytes. 
+ * In std140 specification, the block size should be a multiple of the bigger type that it contains, vec4 in this case (16 bytes).
+ */
+struct PointLightBlock
+{
+    GPUPointLight  lights[MAX_POINT_LIGHTS];    // 4 * 64 = 256 bytes
+    int  count{ 0 };                            // 4 bytes
+    int  _pad[3];                               // 12 bytes padding → 272 bytes total (multiple of 16 bytes to match GPU size)
+};
+
+/**
+ * @brief Full UBO block for directional lights, uploaded once per frame
+ * 
+ * We need to add padding to make total size a multiple of 16 bytes. 
+ * In std140 specification, the block size should be a multiple of the bigger type that it contains, vec4 in this case (16 bytes).
+ */
+struct DirectionalLightBlock
+{
+    GPUDirectionalLight lights[MAX_DIRECTIONAL_LIGHTS]; // 2 * 112 = 224 bytes
+    int count{ 0 };                                     // 4 bytes
+    int _pad[3];                                        // 12 bytes padding → 240 bytes total (multiple of 16 bytes to match GPU size)
 };
 
 /**
