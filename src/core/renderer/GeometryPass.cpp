@@ -1,6 +1,8 @@
 #include "GeometryPass.h"
 #include "BufferManager.h"
 
+const PipelineState GeometryPass::k_state = PipelineState(); // all defaults
+
 void GeometryPass::execute(Scene& scene)
 {
 	// Forward rendering: Main Pass
@@ -19,10 +21,8 @@ void GeometryPass::execute(Scene& scene)
 	glClearColor(0.16f, 0.18f, 0.20f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	// Configure OpenGL state
-	// TODO: Create OpenGL context manager class
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	// Apply OpenGL pipeline state
+	k_state.apply();
 
 	// Setup matrices with scene camera
 	Camera* camera = scene.get_active_camera();

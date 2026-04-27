@@ -273,5 +273,5 @@ void Renderer::set_vsync(bool enabled)
 void Renderer::set_wireframe(bool enabled)
 {
 	m_wireframe = enabled;
-	glPolygonMode(GL_FRONT_AND_BACK, enabled ? GL_LINE : GL_FILL);
+	PipelineState::set_wireframe_override(enabled);
 }

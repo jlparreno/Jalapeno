@@ -15,6 +15,7 @@
 #include "ShadowPass.h"
 #include "GeometryPass.h"
 #include "SkyboxPass.h"
+#include "PipelineState.h"
 #include "config.h"
 
 #include <string>

@@ -3,6 +3,7 @@
 #include "ShaderManager.h"
 #include "Renderer.h"
 #include "RenderPass.h"
+#include "PipelineState.h"
 #include "Cube.h"
 
 /**
@@ -78,6 +79,13 @@ private:
 
     // Unit cube used to render the skybox
     std::unique_ptr<Cube> m_cube{ nullptr };
+
+
+    // Pipeline state for skybox rendering
+    static const PipelineState k_render_state;
+
+    // Pipeline state for HDR to cubemap capture
+    static const PipelineState k_capture_state;
 
     // Perspective projection matrix with 90° FOV used during cubemap capture
     static const glm::mat4 s_capture_projection;

@@ -3,6 +3,7 @@
 #include "RenderPass.h"
 #include "ShadowPass.h"
 #include "FramebufferManager.h"
+#include "PipelineState.h"
 #include "config.h"
 
 /**
@@ -47,4 +48,8 @@ public:
      * @param shader The shader program to receive the light uniforms
      */
     void upload_lights(Scene& scene, ShaderProgram* shader) override;
+
+private:
+
+    static const PipelineState k_state;
 };

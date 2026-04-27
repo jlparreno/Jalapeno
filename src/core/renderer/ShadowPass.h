@@ -3,6 +3,7 @@
 #include "RenderPass.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
+#include "PipelineState.h"
 
 /**
  * @class ShadowPass
@@ -45,6 +46,9 @@ public:
     void upload_lights(Scene& scene, ShaderProgram* shader) override;
 
 private:
+
+    // OpenGL context state for this pass
+    static const PipelineState k_state;
 
     // Depth-only shader used to render scene geometry into shadow map framebuffers for directional lights
     ShaderProgram* m_directional_shadows_shader;

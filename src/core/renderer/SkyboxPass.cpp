@@ -1,5 +1,15 @@
 #include "SkyboxPass.h"
 
+const PipelineState SkyboxPass::k_render_state = PipelineState() //initialize defaults
+    .set_depth_write(false)     // skybox doesn't write depth
+    .set_depth_func(GL_LEQUAL)  // pass where depth buffer is 1.0 (background)
+    .set_cull_mode(GL_FRONT);   // we render from inside the cube
+
+const PipelineState SkyboxPass::k_capture_state = PipelineState() // initialize defaults
+    .set_depth_test(false)      // depth test disabled for cubemap capture
+    .set_depth_write(false)     // depth write disabled for cubemap capture
+    .set_cull_face(false);      // culling disabled for cubemap capture
+
 const glm::mat4 SkyboxPass::s_capture_projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
 const glm::mat4 SkyboxPass::s_capture_views[6] = 
@@ -66,10 +76,8 @@ void SkyboxPass::execute(Scene& scene)
     fbo->bind();
     m_shader->bind();
 
-    // Configure state. Depth func to LEQUAL to pass depth test where depth buffer is 1.0 (background)
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_FALSE);
-    glCullFace(GL_FRONT);
+    // Apply OpenGL pipeline state for cubemap rendering
+    k_render_state.apply();
 
     // Configure matrices
     Camera* cam = scene.get_active_camera();
@@ -88,11 +96,6 @@ void SkyboxPass::execute(Scene& scene)
     
     // Skybox draw call
     m_cube->draw_geometry();
-
-    // Restore state
-    glCullFace(GL_BACK);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LESS);
 
     // Unbind shader and fbo
     m_shader->unbind();
@@ -133,18 +136,15 @@ void SkyboxPass::convert_hdr_to_cubemap(const Texture* hdr_texture)
         m_equirect_to_cubemap_shader->set_uniform("capture_views[" + std::to_string(i) + "]", s_capture_views[i]);
     }
 
-    // Configure state
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    // Apply OpenGL pipeline state for cubemap capture
+    k_capture_state.apply();
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Draw the cubemap
     m_cube->draw_geometry();
 
-    // Restore state
     glBindTexture(GL_TEXTURE_2D, 0);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     // Unbind shader and FBO
     m_equirect_to_cubemap_shader->unbind();

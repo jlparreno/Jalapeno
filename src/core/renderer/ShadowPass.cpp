@@ -1,5 +1,10 @@
 #include "ShadowPass.h"
 
+#include <cmath>
+
+const PipelineState ShadowPass::k_state = PipelineState() // initialize defaults
+    .set_cull_mode(GL_FRONT); // set front face culling for shadow acne
+
 ShadowPass::ShadowPass()
 {
     // Get depth shaders
@@ -16,7 +21,7 @@ ShadowPass::ShadowPass()
 void ShadowPass::execute(Scene& scene)
 {
     // Enable front face culling to avoid Peter panning
-    glCullFace(GL_FRONT);
+    k_state.apply();
 
     for (auto& light : scene.get_scene_lights())
     {
@@ -67,9 +72,6 @@ void ShadowPass::execute(Scene& scene)
             m_point_shadows_shader->unbind();
         }
     }
-
-    // Recover previous state
-    glCullFace(GL_BACK);
 }
 
 void ShadowPass::upload_lights(Scene& scene, ShaderProgram* shader)
